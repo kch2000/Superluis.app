@@ -1,21 +1,48 @@
+const CACHE_NAME = 'superluis-v1';
+const APP_SHELL = [
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './service-worker.js'
+];
 
-self.addEventListener('install',e=>{
+// Install
+self.addEventListener('install', (e)=>{
+  e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_SHELL)));
+  self.skipWaiting();
+});
+
+// Activate
+self.addEventListener('activate', (e)=>{
   e.waitUntil(
-    caches.open('sl-v1').then(c=>c.addAll([
-      './',
-      './index.html',
-      './manifest.json',
-      './assets/audio/beep1.wav',
-      './assets/audio/beep2.wav',
-      './assets/audio/beep3.wav'
-    ]))
+    caches.keys().then(keys=>Promise.all(keys.map(k=>k!==CACHE_NAME?caches.delete(k):null)))
   );
+  self.clients.claim();
 });
-self.addEventListener('activate',e=>{
-  e.waitUntil(self.clients.claim());
-});
-self.addEventListener('fetch',e=>{
+
+// Fetch
+self.addEventListener('fetch', (e)=>{
+  const req = e.request;
+  const url = new URL(req.url);
+
+  // App shell cache-first
+  if(APP_SHELL.some(p=>url.pathname.endsWith(p.replace('./','/')) || url.pathname === '/')){
+    e.respondWith(
+      caches.match(req).then(cached=> cached || fetch(req).then(res=>{
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then(c=>c.put(req, copy));
+        return res;
+      }))
+    );
+    return;
+  }
+
+  // Otros: network-first con fallback a cache
   e.respondWith(
-    caches.match(e.request).then(r=> r || fetch(e.request))
+    fetch(req).then(res=>{
+      const copy = res.clone();
+      caches.open(CACHE_NAME).then(c=>c.put(req, copy));
+      return res;
+    }).catch(()=>caches.match(req))
   );
 });
