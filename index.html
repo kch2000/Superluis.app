@@ -1,127 +1,343 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>SuperLuis.app</title>
 <style>
-body{margin:0;font-family:sans-serif;background:#0f172a;color:#e2e8f0}
-header{background:#111827;padding:10px;position:sticky;top:0}
-button{margin:3px;padding:6px 10px;border:none;border-radius:6px}
-.btn-ok{background:#10b981;color:white}
-.btn-warn{background:#fbbf24;color:black}
-.exercise{border:1px solid #1f2937;margin:10px;padding:10px;border-radius:8px;background:#1e293b}
-.exercise.done{background:#065f46}
-.series .item{margin:8px 0;padding:8px;border:1px dashed #475569;border-radius:6px}
-.item.running{background:#064e3b}
-#restBar{position:sticky;top:50px;background:#fbbf24;color:black;padding:6px;display:none}
+:root{
+  --bg:#0f172a;--card:#1e293b;--ink:#e2e8f0;--muted:#94a3b8;
+  --ok:#10b981;--ok-dark:#065f46;--warn:#fbbf24;--border:#334155;
+}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial}
+header{position:sticky;top:0;z-index:5;background:#111827;border-bottom:1px solid var(--border);padding:10px}
+h1{margin:0;font-size:18px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button{border:none;border-radius:8px;padding:8px 12px;background:#334155;color:#fff}
+button.primary{background:var(--ok)}
+button.warn{background:var(--warn);color:#111}
+button.ghost{background:transparent;border:1px solid var(--border)}
+small, .muted{color:var(--muted)}
+main{padding:12px}
+.exercise{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;padding:12px}
+.exercise.done{background:var(--ok-dark)}
+.exercise h3{margin:0 0 6px 0;font-size:16px}
+.kv{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0}
+.badge{border:1px solid var(--border);padding:2px 6px;border-radius:6px;font-size:12px}
+.seriesWrap{margin-top:8px}
+.seriesItem{border:1px dashed var(--border);border-radius:10px;padding:10px;margin:8px 0;background:#0b1322}
+.seriesItem.editable{outline:2px solid #1f7cff;background:#0b172a}
+.seriesItem.running{background:#0f3b2f}
+.seriesItem .ctrls{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:4px 8px;background:#0b1322}
+.value{min-width:32px;display:inline-block;text-align:center}
+#restBar{position:sticky;top:56px;background:var(--warn);color:#111;padding:10px;display:none;border-bottom:1px solid #000;z-index:4}
+#audioUnlock{position:fixed;inset:0;background:#000c;backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:99}
+#audioUnlock button{font-size:18px}
+footer{padding:16px;text-align:center;color:var(--muted)}
+a{color:#7dd3fc}
 </style>
 </head>
 <body>
 <header>
-  <b>SuperLuis.app</b>
-  <button id="btnStartDay">Empezar ejercicio</button>
+  <div class="row">
+    <h1>SuperLuis.app</h1>
+    <span class="badge">Auto-siguiente:
+      <label><input type="checkbox" id="autoNext" checked/> sí</label>
+    </span>
+    <button id="btnStartDay" class="primary">Empezar ejercicio</button>
+    <button id="btnResetDay" class="ghost">Reset día</button>
+  </div>
 </header>
 
 <div id="restBar"></div>
-<div id="routine"></div>
+<main id="app"></main>
+
+<div id="audioUnlock">
+  <div style="background:#111827;border:1px solid #222;border-radius:12px;padding:18px;max-width:360px">
+    <h3 style="margin-top:0">Activar audio</h3>
+    <p class="muted">Toca el botón para habilitar la voz y los sonidos en tu dispositivo.</p>
+    <div class="row"><button id="btnUnlockAudio" class="primary">Activar</button></div>
+  </div>
+</div>
+
+<footer>
+  <small class="muted">Hecho para ti. Guarda esta página y ábrela en tu móvil.</small>
+</footer>
 
 <script>
-const state={
-  routine:[
-    {name:"Seated Chest Press",machine:"L070",planned:[{reps:10,weight:57},{reps:10,weight:57},{reps:10,weight:57}],performed:[],rest:20,expanded:true,done:false}
-  ],
-  current:{phase:'idle',exIndex:null,sIndex:null,restTimer:null,restLeft:0,paused:false},
-  queue:Promise.resolve()
+/* ----------------------- Estado ----------------------- */
+const initRoutine = [
+  {
+    name:"Seated Chest Press", machine:"L070", rest:30,
+    planned:[{reps:10,weight:57},{reps:10,weight:57},{reps:10,weight:57}],
+    performed:[], done:false
+  },
+  {
+    name:"Extensión Tríceps", machine:"L150", rest:30,
+    planned:[{reps:8,weight:70},{reps:8,weight:70},{reps:8,weight:70}],
+    performed:[], done:false
+  }
+];
+
+const state = {
+  routine: JSON.parse(localStorage.getItem("sl_routine")||"null") || initRoutine,
+  current: {phase:"idle", exIdx:null, sIdx:null, restLeft:0, paused:false},
+  audioReady:false,
+  autoNext: JSON.parse(localStorage.getItem("sl_autoNext")||"true")
 };
+document.getElementById('autoNext').checked = !!state.autoNext;
 
-// ---- voz y beeps ----
-function say(t){ state.queue=state.queue.then(()=>new Promise(r=>{let u=new SpeechSynthesisUtterance(t);u.lang='es-ES';u.onend=r;window.speechSynthesis.speak(u)}));return state.queue;}
-const ctx=new (window.AudioContext||window.webkitAudioContext)();
-function beep(f=880){let o=ctx.createOscillator();o.frequency.value=f;o.connect(ctx.destination);o.start();setTimeout(()=>o.stop(),200);}
+/* ----------------------- Utilidades ----------------------- */
+function save(){ localStorage.setItem("sl_routine", JSON.stringify(state.routine)); localStorage.setItem("sl_autoNext", JSON.stringify(state.autoNext)); }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-// ---- render ----
+/* ----------------------- Audio / Voz ----------------------- */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx = null;
+function ensureAudio(){
+  if(!actx){ actx = new AudioCtx(); }
+  if(actx.state === "suspended"){ actx.resume(); }
+  state.audioReady = true;
+  document.getElementById('audioUnlock').style.display="none";
+}
+async function beep(freq=880, dur=180){
+  if(!state.audioReady) return;
+  const o=actx.createOscillator(); const g=actx.createGain();
+  o.frequency.value=freq; o.connect(g); g.connect(actx.destination);
+  o.start(); g.gain.setValueAtTime(0.2, actx.currentTime);
+  await sleep(dur); o.stop();
+}
+function speak(txt){ return new Promise(res=>{
+  if(!state.audioReady || !("speechSynthesis" in window)) return res();
+  const u = new SpeechSynthesisUtterance(txt); u.lang="es-ES"; u.rate=1;
+  u.onend=()=>res(); speechSynthesis.speak(u);
+});}
+
+/* ----------------------- Render ----------------------- */
+const $app = document.getElementById('app');
 function render(){
-  const root=document.getElementById('routine');root.innerHTML='';
-  state.routine.forEach((ex,i)=>{
-    let card=document.createElement('div');card.className='exercise'+(ex.done?' done':'');card.dataset.i=i;
-    card.innerHTML=`<h3>${ex.name} (${ex.machine})</h3>
-      <div class="series"></div>`;
-    let s=card.querySelector('.series');
-    if(ex.performed.length>=ex.planned.length){s.innerHTML='<i>Completado ✔</i>';}
-    else{
-      let idx=ex.performed.length;
-      let base=ex.planned[idx];
-      let it=document.createElement('div');
-      it.className='item';it.dataset.s=idx;
-      it.innerHTML=`Serie ${idx+1}: 
-        <span data-r>${base.reps}</span> reps · 
-        <span data-w>${base.weight}</span>kg
-        <button data-a="r-">-</button><button data-a="r+">+</button>
-        <button data-a="w-">-0.5</button><button data-a="w+">+0.5</button>
-        <button class="btn-ok" data-a="start">Iniciar</button>`;
-      s.appendChild(it);
+  $app.innerHTML="";
+  state.routine.forEach((ex,ei)=>{
+    const doneAll = ex.performed.length >= ex.planned.length;
+    const card = document.createElement('section');
+    card.className = "exercise"+(doneAll?" done":"");
+    card.dataset.ei = ei;
+    card.innerHTML = `
+      <h3>${ex.name} <span class="muted">(${ex.machine})</span></h3>
+      <div class="kv">
+        <span class="badge">Series: ${ex.performed.length}/${ex.planned.length}</span>
+        <span class="badge">Descanso: ${ex.rest}s</span>
+      </div>
+      <div class="row">
+        <button data-act="startExercise" class="primary">Iniciar ejercicio</button>
+        <button data-act="addSeries">+ Serie</button>
+        <button data-act="removeSeries">- Serie</button>
+      </div>
+      <div class="seriesWrap"></div>
+      <div class="muted" style="margin-top:6px">Historial: ${
+        ex.performed.map(s=>`${s.reps}×${s.weight}kg`).join(" · ") || "—"
+      }</div>
+    `;
+    // SOLO mostrar la serie pendiente:
+    const sw = card.querySelector('.seriesWrap');
+    if(!doneAll){
+      const si = ex.performed.length;
+      // valores por defecto = copia de la anterior realizada (si existe) o de la planificada actual
+      const lastPerf = ex.performed[si-1];
+      const base = lastPerf ? {reps:lastPerf.reps, weight:lastPerf.weight} : ex.planned[si];
+      const item = document.createElement('div');
+      item.className="seriesItem editable"; item.dataset.si=si;
+      item.innerHTML = `
+        <div><b>Serie ${si+1}</b></div>
+        <div class="ctrls">
+          <span class="chip">Reps:
+            <button data-act="reps-" class="ghost">-</button>
+            <span class="value" data-val="reps">${base.reps}</span>
+            <button data-act="reps+" class="ghost">+</button>
+          </span>
+          <span class="chip">Peso:
+            <button data-act="w-" class="ghost">-0.5</button>
+            <span class="value" data-val="weight">${(+base.weight).toFixed(1)}</span>
+            <button data-act="w+" class="ghost">+0.5</button>
+          </span>
+          <button data-act="startSeries" class="primary">Iniciar serie</button>
+        </div>
+      `;
+      sw.appendChild(item);
+    } else {
+      card.classList.add("done");
     }
-    root.appendChild(card);
+    $app.appendChild(card);
   });
   updateRestBar();
 }
 function updateRestBar(){
-  let bar=document.getElementById('restBar');
-  if(state.current.phase!=='rest'){bar.style.display='none';return;}
-  bar.style.display='block';
-  bar.textContent=`Descanso: ${state.current.restLeft|0}s  `;
-  let btn=document.createElement('button');btn.textContent=state.current.paused?'Continuar':'Pausa';btn.onclick=()=>{
-    if(state.current.paused){state.current.paused=false;if(state.current.restLeft<10)state.current.restLeft=10;}else state.current.paused=true;};
-  bar.appendChild(btn);
-  let b2=document.createElement('button');b2.textContent='Saltar';b2.className='btn-warn';b2.onclick=()=>{state.current.phase='idle';};
-  bar.appendChild(b2);
+  const bar = document.getElementById('restBar');
+  if(state.current.phase!=="rest"){ bar.style.display="none"; bar.innerHTML=""; return; }
+  bar.style.display="block";
+  bar.innerHTML = `
+    <b>Descanso:</b> ${Math.max(0, state.current.restLeft|0)}s
+    <button data-act="pauseRest" class="ghost">${state.current.paused?"Continuar":"Pausa"}</button>
+    <button data-act="skipRest" class="warn">Saltar descanso</button>
+  `;
 }
 
-// ---- clicks ----
-document.addEventListener('click',ev=>{
-  let b=ev.target.closest('button');if(!b)return;
-  let a=b.dataset.a;let card=ev.target.closest('.exercise');if(!card)return;
-  let ex=state.routine[card.dataset.i];let it=card.querySelector('.item');
-  if(!it)return;let repsEl=it.querySelector('[data-r]');let wEl=it.querySelector('[data-w]');
-  if(a==='r-') repsEl.textContent=Math.max(1,+repsEl.textContent-1);
-  if(a==='r+') repsEl.textContent=+repsEl.textContent+1;
-  if(a==='w-') wEl.textContent=(+wEl.textContent-0.5).toFixed(1);
-  if(a==='w+') wEl.textContent=(+wEl.textContent+0.5).toFixed(1);
-  if(a==='start'){ it.classList.add('running'); runSeries(+card.dataset.i,+it.dataset.s,+repsEl.textContent,+wEl.textContent);}
-});
-document.getElementById('btnStartDay').onclick=()=>{let idx=state.routine.findIndex(ex=>ex.performed.length<ex.planned.length);if(idx>=0){let ex=state.routine[idx];let btn=document.querySelector(`.exercise[data-i="${idx}"] [data-a="start"]`);btn?.click();}};
+/* ----------------------- Lógica de series ----------------------- */
+async function runSeries(ei, si, reps, weight){
+  // bloquear edición visual:
+  const card = document.querySelector(`.exercise[data-ei="${ei}"]`);
+  const item = card?.querySelector('.seriesItem');
+  if(item){ item.classList.remove('editable'); item.classList.add('running'); }
+  state.current={phase:"series", exIdx:ei, sIdx:si};
 
-// ---- ejecutar serie ----
-async function runSeries(exI,sI,reps,w){
-  state.current={phase:'series',exIndex:exI,sIndex:sI};
-  await say(`Empezamos serie ${sI+1}`);
-  for(let r=reps;r>=1;r--){
-    await say(`${r}`);await say("arriba");await say("abajo");
+  await speak(`Empezamos serie ${si+1}`);
+  for(let r=reps; r>=1; r--){
+    await speak(`${r}`);
+    await speak("arriba");
+    await speak("abajo");
+    // micro pausa para evitar solapes en Android:
+    await sleep(50);
   }
-  state.routine[exI].performed.push({reps,weight:w});
-  if(state.routine[exI].performed.length>=state.routine[exI].planned.length){state.routine[exI].done=true;}
-  render();
-  await startRest(state.routine[exI].rest||20);
-  if(state.routine[exI].performed.length<state.routine[exI].planned.length){let btn=document.querySelector(`.exercise[data-i="${exI}"] [data-a="start"]`);btn?.click();}
+
+  // registrar
+  const ex = state.routine[ei];
+  ex.performed.push({reps, weight:+weight});
+  if(ex.performed.length>=ex.planned.length) ex.done=true;
+  save(); render();
+
+  // descanso
+  await startRest(ex.rest||20);
+
+  // siguiente serie automática si procede
+  if(state.autoNext){
+    const ex2 = state.routine[ei];
+    if(ex2.performed.length<ex2.planned.length){
+      // “click” virtual al botón de iniciar serie
+      const btn = document.querySelector(`.exercise[data-ei="${ei}"] [data-act="startSeries"]`);
+      if(btn) btn.click();
+    }
+  }
 }
 
-function startRest(sec){return new Promise(res=>{
-  state.current={phase:'rest',restLeft:sec,paused:false};
-  say(`Iniciamos descanso de ${sec} segundos`);
-  function tick(){
-    if(state.current.phase!=='rest'){res();render();return;}
-    if(!state.current.paused){
-      state.current.restLeft-=1;updateRestBar();
-      if(state.current.restLeft%10===0&&state.current.restLeft>0) say(`${state.current.restLeft} segundos`);
-      if([3,2,1].includes(state.current.restLeft)) beep(500+state.current.restLeft*200);
-      if(state.current.restLeft<=0){state.current.phase='idle';say("Vamos a la siguiente serie");res();}
+function startRest(seconds){
+  return new Promise(async (resolve)=>{
+    state.current={...state.current, phase:"rest", restLeft:seconds, paused:false};
+    updateRestBar();
+    await speak(`Iniciamos descanso de ${seconds} segundos`);
+    async function tick(){
+      if(state.current.phase!=="rest"){ updateRestBar(); return resolve(); }
+      if(!state.current.paused){
+        state.current.restLeft -= 1; updateRestBar();
+        if(state.current.restLeft>0 && state.current.restLeft%10===0) await speak(`${state.current.restLeft} segundos`);
+        if([3,2,1].includes(state.current.restLeft|0)){ await beep(400+state.current.restLeft*200,160); }
+        if(state.current.restLeft<=0){
+          state.current.phase="idle"; updateRestBar();
+          await speak("Vamos con la siguiente serie");
+          return resolve();
+        }
+      }
+      setTimeout(tick,1000);
     }
     setTimeout(tick,1000);
-  }
-  tick();
-});}
+  });
+}
 
+/* ----------------------- Clicks globales ----------------------- */
+document.addEventListener('click', (e)=>{
+  const b = e.target.closest('button'); if(!b) return;
+  // Audio unlock (primera interacción)
+  if(b.id==="btnUnlockAudio"){ ensureAudio(); return; }
+
+  const act = b.dataset.act;
+  if(!act){
+    if(b.id==="btnStartDay"){
+      ensureAudio();
+      // buscar primer ejercicio con series pendientes
+      const ei = state.routine.findIndex(x=>x.performed.length<x.planned.length);
+      if(ei>=0){
+        const btn = document.querySelector(`.exercise[data-ei="${ei}"] [data-act="startSeries"]`);
+        btn?.click();
+      }
+      return;
+    }
+    if(b.id==="btnResetDay"){
+      state.routine.forEach(ex=>{ex.performed=[];ex.done=false;});
+      state.current={phase:"idle",exIdx:null,sIdx:null,restLeft:0,paused:false};
+      save(); render(); return;
+    }
+    return;
+  }
+
+  // acciones dentro de ejercicios
+  const card = e.target.closest('.exercise'); if(!card) return;
+  const ei = +card.dataset.ei;
+  const ex = state.routine[ei];
+
+  if(act==="addSeries"){ 
+    const last = ex.planned[ex.planned.length-1] || {reps:10,weight: ex.performed.slice(-1)[0]?.weight||10};
+    ex.planned.push({...last}); save(); render(); return;
+  }
+  if(act==="removeSeries"){
+    if(ex.planned.length> ex.performed.length) ex.planned.pop();
+    save(); render(); return;
+  }
+
+  const item = card.querySelector('.seriesItem');
+  if(!item) return; // nada pendiente
+  const repsEl = item.querySelector('[data-val="reps"]');
+  const wEl   = item.querySelector('[data-val="weight"]');
+
+  if(act==="reps-"){ repsEl.textContent = Math.max(1, +repsEl.textContent-1); return; }
+  if(act==="reps+"){ repsEl.textContent = (+repsEl.textContent+1); return; }
+  if(act==="w-"){   wEl.textContent = (+wEl.textContent-0.5).toFixed(1); return; }
+  if(act==="w+"){   wEl.textContent = (+wEl.textContent+0.5).toFixed(1); return; }
+
+  if(act==="startExercise"){
+    // equivalente a iniciar serie 1 si no hay ninguna hecha
+    if(ex.performed.length<ex.planned.length){
+      const btn = card.querySelector('[data-act="startSeries"]'); btn?.click();
+    }
+    return;
+  }
+
+  if(act==="startSeries"){
+    // bloquear edición visual (clase running) y lanzar
+    item.classList.remove('editable'); item.classList.add('running');
+    const si = ex.performed.length;
+    const reps = +repsEl.textContent; const weight = +wEl.textContent;
+    runSeries(ei, si, reps, weight);
+    return;
+  }
+
+  if(act==="pauseRest"){
+    if(state.current.phase==="rest"){
+      state.current.paused = !state.current.paused;
+      if(!state.current.paused && state.current.restLeft<10) state.current.restLeft = 10;
+      updateRestBar();
+    }
+    return;
+  }
+
+  if(act==="skipRest"){
+    if(state.current.phase==="rest"){
+      state.current.phase="idle"; updateRestBar();
+      // pasar a siguiente serie del mismo ejercicio (no otro ejercicio)
+      if(state.autoNext){
+        const ei2 = state.current.exIdx ?? ei;
+        const btn = document.querySelector(`.exercise[data-ei="${ei2}"] [data-act="startSeries"]`);
+        btn?.click();
+      }
+    }
+    return;
+  }
+});
+
+document.getElementById('autoNext').addEventListener('change', (e)=>{
+  state.autoNext = !!e.target.checked; save();
+});
+
+/* ----------------------- Inicio ----------------------- */
 render();
 </script>
 </body>
