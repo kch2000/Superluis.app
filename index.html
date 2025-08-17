@@ -5,123 +5,360 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>SuperLuis.app</title>
 <style>
-:root{--bg:#0f172a;--card:#1e293b;--ink:#e2e8f0;--muted:#94a3b8;
---ok:#10b981;--ok-dark:#065f46;--warn:#fbbf24;--border:#334155}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Roboto,Arial}
-header{position:sticky;top:0;background:#111827;padding:10px;border-bottom:1px solid var(--border);z-index:5}
+:root{
+  --bg:#0f172a; --panel:#111827; --card:#1e293b; --ink:#e5e7eb; --muted:#94a3b8;
+  --ok:#10b981; --ok2:#065f46; --warn:#fbbf24; --border:#334155; --accent:#60a5fa;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Roboto,Arial,Segoe UI}
+header{position:sticky;top:0;padding:10px;background:var(--panel);border-bottom:1px solid var(--border);z-index:20}
 h1{margin:0;font-size:18px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-button{border:none;border-radius:8px;padding:8px 12px;background:#334155;color:#fff}
-button.primary{background:var(--ok)}button.warn{background:var(--warn);color:#111}button.ghost{background:transparent;border:1px solid var(--border)}
-small,.muted{color:var(--muted)}main{padding:12px}
-.exercise{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;padding:12px}
-.exercise.done{background:var(--ok-dark)}
-.seriesItem{border:1px dashed var(--border);border-radius:10px;padding:10px;margin:8px 0;background:#0b1322}
-.seriesItem.editable{outline:2px solid #1f7cff;background:#0b172a}
-.seriesItem.running{background:#0f3b2f}
-.seriesItem .ctrls{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:4px 8px;background:#0b1322}
-.value{min-width:32px;text-align:center;display:inline-block}
-#restBar{position:sticky;top:56px;background:var(--warn);color:#111;padding:10px;display:none;border-bottom:1px solid #000}
-#audioUnlock{position:fixed;inset:0;background:#000c;display:flex;align-items:center;justify-content:center;z-index:99}
-#audioUnlock button{font-size:18px}
+button{border:0;border-radius:10px;padding:8px 12px;background:#334155;color:#fff}
+button.primary{background:var(--ok);color:#052e27}
+button.ghost{background:transparent;border:1px solid var(--border)}
+button.warn{background:var(--warn);color:#111}
+.badge{color:var(--muted);font-size:14px}
+main{padding:12px;padding-bottom:96px}
+.exercise{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:14px}
+.exercise.done{background:var(--ok2)}
+.exercise h3{margin:0 0 6px 0;font-size:16px}
+.seriesItem{border:1px dashed var(--border);border-radius:12px;background:#0b1322;padding:10px;margin-top:10px}
+.seriesItem.editable{outline:2px solid var(--accent)}
+.seriesItem.running{background:#0f3b2f;outline:2px solid var(--ok)}
+.ctrls{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);
+  border-radius:999px;padding:4px 8px;background:#0b1322}
+.value{min-width:32px;display:inline-block;text-align:center}
+.muted{color:var(--muted)}
+#restBar{position:sticky;top:56px;display:none;background:var(--warn);color:#111;
+  padding:10px;border-bottom:1px solid #000;z-index:15}
+#hud{position:fixed;left:0;right:0;bottom:0;background:rgba(17,24,39,.92);
+  border-top:1px solid var(--border);padding:10px 12px;display:none;z-index:25}
+#hud .title{font-weight:700}
+#hud .big{font-size:28px;line-height:1.1;margin-top:6px}
+#hud .sub{color:var(--muted);font-size:13px}
+#snack{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;background:#000c;
+  color:#fff;padding:8px 12px;border-radius:8px;display:none;z-index:40}
+#unlock{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:50}
+#unlock .box{background:#0b1220;border:1px solid var(--border);border-radius:14px;padding:18px;max-width:360px}
 </style>
 </head>
 <body>
 <header>
- <div class="row">
-   <h1>SuperLuis.app</h1>
-   <span class="badge">Auto-siguiente:<label><input type="checkbox" id="autoNext" checked/> sí</label></span>
-   <button id="btnStartDay" class="primary">Empezar ejercicio</button>
-   <button id="btnSave" class="ghost">Guardar</button>
-   <button id="btnResetDay" class="ghost">Reset día</button>
- </div>
+  <div class="row">
+    <h1>SuperLuis.app</h1>
+    <label class="badge">Auto-siguiente serie
+      <input id="autoNext" type="checkbox" checked>
+    </label>
+    <button id="btnStartDay" class="primary">Empezar ejercicio</button>
+    <button id="btnSave" class="ghost">Guardar</button>
+    <button id="btnResetDay" class="ghost">Reset día</button>
+  </div>
 </header>
 
 <div id="restBar"></div>
 <main id="app"></main>
 
-<div id="audioUnlock">
- <div style="background:#111827;border:1px solid #222;border-radius:12px;padding:18px;max-width:360px">
-   <h3>Activar audio</h3>
-   <p class="muted">Pulsa para habilitar voz y sonidos.</p>
-   <div class="row"><button id="btnUnlockAudio" class="primary">Activar</button></div>
- </div>
+<div id="hud">
+  <div class="title" id="hudTitle">Serie</div>
+  <div class="big" id="hudCount">—</div>
+  <div class="sub" id="hudHint">Cuenta de repeticiones y voz</div>
+</div>
+
+<div id="snack"></div>
+
+<div id="unlock">
+  <div class="box">
+    <h3 style="margin:0 0 6px 0">Activar audio</h3>
+    <p class="muted" style="margin:0 0 12px 0">Pulsa para habilitar sonidos y voz (requisito de Android).</p>
+    <div class="row">
+      <button id="btnUnlock" class="primary">Activar</button>
+    </div>
+  </div>
 </div>
 
 <script>
-/* ---- Estado ---- */
-const initRoutine=[{name:"Seated Chest Press",machine:"L070",rest:20,
-planned:[{reps:10,weight:57},{reps:10,weight:57},{reps:10,weight:57}],performed:[],done:false}];
-const state={routine:JSON.parse(localStorage.getItem("sl_routine")||"null")||initRoutine,
-current:{phase:"idle",exIdx:null,sIdx:null,restLeft:0,paused:false},audioReady:false,
-autoNext:JSON.parse(localStorage.getItem("sl_autoNext")||"true")};
-function save(){localStorage.setItem("sl_routine",JSON.stringify(state.routine));localStorage.setItem("sl_autoNext",state.autoNext);}
-document.getElementById('autoNext').checked=state.autoNext;
+/* ===== Estado ===== */
+const initRoutine = [{
+  name:"Seated Chest Press", machine:"L070", rest:20,
+  planned:[{reps:10,weight:57},{reps:10,weight:57},{reps:10,weight:57}],
+  performed:[], done:false
+},{
+  name:"Seated Row", machine:"L090", rest:20,
+  planned:[{reps:6,weight:70},{reps:6,weight:70},{reps:6,weight:70}],
+  performed:[], done:false
+}];
 
-/* ---- Audio ---- */
-const AudioCtx=window.AudioContext||window.webkitAudioContext;let actx=null;
-function ensureAudio(){if(!actx){actx=new AudioCtx();}if(actx.state==="suspended"){actx.resume();}state.audioReady=true;document.getElementById('audioUnlock').style.display="none";}
-async function beep(freq=800,dur=180){if(!state.audioReady)return;let o=actx.createOscillator();let g=actx.createGain();o.frequency.value=freq;o.connect(g);g.connect(actx.destination);o.start();await new Promise(r=>setTimeout(r,dur));o.stop();}
-async function speak(txt,timeout=2500){if(!state.audioReady||!("speechSynthesis"in window))return;try{speechSynthesis.cancel();}catch(e){}return new Promise(res=>{let u=new SpeechSynthesisUtterance(txt);u.lang="es-ES";let done=false;let to=setTimeout(()=>{if(!done){done=true;res();}},timeout);u.onend=()=>{if(!done){done=true;clearTimeout(to);res();}};speechSynthesis.speak(u);});}
+const state = {
+  routine: JSON.parse(localStorage.getItem("sl_routine")||"null") || initRoutine,
+  current: { phase:"idle", exIdx:null, sIdx:null, restLeft:0, paused:false, cadence:2000 },
+  audioReady:false,
+  autoNext: JSON.parse(localStorage.getItem("sl_autoNext")||"true")
+};
+function persist(){ localStorage.setItem("sl_routine", JSON.stringify(state.routine)); localStorage.setItem("sl_autoNext", state.autoNext); }
 
-/* ---- Render ---- */
-function render(){let app=document.getElementById('app');app.innerHTML="";state.routine.forEach((ex,ei)=>{let done=ex.performed.length>=ex.planned.length;
- let card=document.createElement('section');card.className="exercise"+(done?" done":"");card.dataset.ei=ei;
- card.innerHTML=`<h3>${ex.name} (${ex.machine})</h3>
- <div>Series ${ex.performed.length}/${ex.planned.length} · Descanso ${ex.rest}s</div>
- <div class="seriesWrap"></div>
- <div class="muted">Historial: ${ex.performed.map(s=>s.reps+"×"+s.weight+"kg").join(" · ")||"—"}</div>`;
- let sw=card.querySelector('.seriesWrap');
- if(!done){let si=ex.performed.length;let last=ex.performed[si-1];let base=last?{...last}:ex.planned[si];
- let item=document.createElement('div');item.className="seriesItem editable";item.dataset.si=si;
- item.innerHTML=`<b>Serie ${si+1}</b>
- <div class="ctrls">
-   <span class="chip">Reps:<button data-act="r-" class="ghost">-</button>
-   <span data-val="reps">${base.reps}</span><button data-act="r+" class="ghost">+</button></span>
-   <span class="chip">Peso:<button data-act="w-" class="ghost">-0.5</button>
-   <span data-val="weight">${(+base.weight).toFixed(1)}</span><button data-act="w+" class="ghost">+0.5</button></span>
-   <button data-act="startSeries" class="primary">Iniciar serie</button>
- </div>`;sw.appendChild(item);}app.appendChild(card);});updateRestBar();}
-function updateRestBar(){let bar=document.getElementById('restBar');if(state.current.phase!=="rest"){bar.style.display="none";bar.innerHTML="";return;}
- bar.style.display="block";bar.innerHTML=`Descanso: ${state.current.restLeft}s
- <button data-act="pauseRest">${state.current.paused?"Continuar":"Pausa"}</button>
- <button data-act="skipRest" class="warn">Saltar</button>`;}
+/* ===== Audio / Voz ===== */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx=null;
+function ensureAudio(){
+  if(!actx){ actx = new AudioCtx(); }
+  if(actx.state==="suspended"){ actx.resume(); }
+  state.audioReady = true;
+  document.getElementById('unlock').style.display="none";
+}
+function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+async function beep(freq=880,ms=120,vol=0.08){
+  if(!state.audioReady) return;
+  const o=actx.createOscillator(), g=actx.createGain();
+  o.frequency.value=freq; g.gain.value=vol;
+  o.connect(g); g.connect(actx.destination); o.start(); await wait(ms); o.stop();
+}
+function speak(text, max=2500){
+  if(!state.audioReady || !("speechSynthesis" in window)) return Promise.resolve();
+  try { speechSynthesis.cancel(); } catch(e){}
+  return new Promise(res=>{
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang="es-ES";
+    let fin=false;
+    const to = setTimeout(()=>{ if(!fin){ fin=true; res(); } }, max);
+    u.onend=()=>{ if(!fin){ fin=true; clearTimeout(to); res(); } };
+    speechSynthesis.speak(u);
+  });
+}
+const $ = s=>document.querySelector(s);
+function snack(msg){ const n=$("#snack"); n.textContent=msg; n.style.display="block"; setTimeout(()=>n.style.display="none",1500); }
 
-/* ---- Series ---- */
-async function runSeries(ei,si,reps,weight){ensureAudio();await beep(900,120);
- state.current={phase:"series",exIdx:ei,sIdx:si};
- await speak("Empezamos serie "+(si+1));
- for(let r=reps;r>=1;r--){await speak(r.toString());await speak("arriba");await speak("abajo");}
- state.routine[ei].performed.push({reps,weight:+weight});if(state.routine[ei].performed.length>=state.routine[ei].planned.length)state.routine[ei].done=true;save();render();
- await startRest(state.routine[ei].rest);
- if(state.autoNext){let ex=state.routine[ei];if(ex.performed.length<ex.planned.length){document.querySelector(`.exercise[data-ei="${ei}"] [data-act="startSeries"]`)?.click();}}}
-function startRest(sec){return new Promise(async res=>{state.current={...state.current,phase:"rest",restLeft:sec,paused:false};updateRestBar();await speak("Descanso de "+sec+" segundos");
- async function tick(){if(state.current.phase!=="rest"){updateRestBar();return res();}
- if(!state.current.paused){state.current.restLeft--;updateRestBar();
- if([3,2,1].includes(state.current.restLeft))beep(500+state.current.restLeft*200,150);
- if(state.current.restLeft<=0){state.current.phase="idle";updateRestBar();await speak("Vamos a la siguiente serie");return res();}}
- setTimeout(tick,1000);}tick();});}
+/* ===== Render ===== */
+function render(){
+  const app=$("#app"); app.innerHTML="";
+  state.routine.forEach((ex,ei)=>{
+    const done = ex.performed.length>=ex.planned.length;
+    const sec = document.createElement("section");
+    sec.className="exercise"+(done?" done":"");
+    sec.dataset.ei = ei;
+    sec.innerHTML = `
+      <h3>${ex.name} <small class="muted">(${ex.machine})</small></h3>
+      <div class="muted">Completadas: ${ex.performed.length}/${ex.planned.length} · Descanso ${ex.rest}s</div>
+      <div class="seriesWrap"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="primary" data-act="startExercise">Empezar ejercicio</button>
+        <button class="ghost" data-act="addSeries">+ serie</button>
+      </div>
+      <div class="muted" style="margin-top:8px">Historial: ${ex.performed.map(s=>`${s.reps}×${s.weight}kg`).join(" · ")||"—"}</div>
+    `;
+    // Mostrar solo la primera serie pendiente, JAMÁS salta
+    if(!done){
+      const si = ex.performed.length;
+      const lastDone = ex.performed[si-1];
+      const plan = ex.planned[si] || ex.planned[ex.planned.length-1] || {reps:10,weight:50};
+      const base = lastDone ? {...lastDone} : plan;
+      const wrap = sec.querySelector(".seriesWrap");
+      const item = document.createElement("div");
+      item.className="seriesItem editable";
+      item.dataset.si = si;
+      item.innerHTML = `
+        <b>Serie ${si+1}</b>
+        <div class="ctrls">
+          <span class="chip">Reps:
+            <button data-act="rep-" class="ghost">-</button>
+            <span data-val="reps" class="value">${base.reps}</span>
+            <button data-act="rep+" class="ghost">+</button>
+          </span>
+          <span class="chip">Peso:
+            <button data-act="w-" class="ghost">-0.5</button>
+            <span data-val="weight" class="value">${(+base.weight).toFixed(1)}</span>
+            <button data-act="w+" class="ghost">+0.5</button>
+          </span>
+          <button class="primary" data-act="startSeries">Iniciar serie</button>
+        </div>
+      `;
+      wrap.appendChild(item);
+    }
+    app.appendChild(sec);
+  });
+  updateRestBar();
+}
+function updateRestBar(){
+  const bar=$("#restBar");
+  if(state.current.phase!=="rest"){ bar.style.display="none"; bar.innerHTML=""; return; }
+  bar.style.display="block";
+  bar.innerHTML = `
+    Descanso: ${state.current.restLeft}s
+    <button data-act="pauseRest">${state.current.paused?"Continuar":"Pausa"}</button>
+    <button data-act="skipRest" class="warn">Saltar</button>
+  `;
+}
+function hudShow(exName, reps, current){
+  $("#hudTitle").textContent = exName;
+  $("#hudCount").textContent = `Reps: ${current}/${reps}`;
+  $("#hud").style.display="block";
+}
+function hudUpdate(reps, current){ $("#hudCount").textContent = `Reps: ${current}/${reps}`; }
+function hudHide(){ $("#hud").style.display="none"; }
 
-/* ---- Eventos ---- */
-document.addEventListener('click',e=>{let b=e.target.closest('button');if(!b)return;
- if(b.id==="btnUnlockAudio"){ensureAudio();return;}
- if(b.id==="btnSave"){save();beep(700,120);return;}
- if(b.id==="btnStartDay"){ensureAudio();let ei=state.routine.findIndex(x=>x.performed.length<x.planned.length);if(ei>=0){document.querySelector(`.exercise[data-ei="${ei}"] [data-act="startSeries"]`)?.click();}return;}
- if(b.id==="btnResetDay"){state.routine.forEach(ex=>{ex.performed=[];ex.done=false;});save();render();return;}
- let act=b.dataset.act;if(!act)return;let card=e.target.closest('.exercise');if(!card)return;let ei=+card.dataset.ei;let ex=state.routine[ei];
- let item=card.querySelector('.seriesItem');if(!item)return;let repsEl=item.querySelector('[data-val="reps"]');let wEl=item.querySelector('[data-val="weight"]');
- if(act==="r-")repsEl.textContent=Math.max(1,+repsEl.textContent-1);
- if(act==="r+")repsEl.textContent=+repsEl.textContent+1;
- if(act==="w-")wEl.textContent=(+wEl.textContent-0.5).toFixed(1);
- if(act==="w+")wEl.textContent=(+wEl.textContent+0.5).toFixed(1);
- if(act==="startSeries"){item.classList.remove('editable');item.classList.add('running');runSeries(ei,ex.performed.length,+repsEl.textContent,+wEl.textContent);}
- if(act==="pauseRest"){state.current.paused=!state.current.paused;if(!state.current.paused&&state.current.restLeft<10)state.current.restLeft=10;updateRestBar();}
- if(act==="skipRest"){state.current.phase="idle";updateRestBar();if(state.autoNext){document.querySelector(`.exercise[data-ei="${ei}"] [data-act="startSeries"]`)?.click();}}
+/* ===== Serie ===== */
+async function runSeries(ei, si, reps, weight){
+  const ex = state.routine[ei];
+  if(!ex || si!==ex.performed.length){ // seguridad: siempre la pendiente exacta
+    render(); return snack("Reajustado a la serie pendiente");
+  }
+
+  const card = document.querySelector(`.exercise[data-ei="${ei}"]`);
+  const item = card?.querySelector(".seriesItem");
+  if(item){ item.classList.remove("editable"); item.classList.add("running"); }
+
+  hudShow(`${ex.name} (${ex.machine})`, reps, 0);
+  await beep(900,110);
+  await speak(`Empezamos serie ${si+1}`);
+
+  state.current = { ...state.current, phase:"series", exIdx:ei, sIdx:si };
+
+  let repNow = 0;
+  for(let r=1;r<=reps;r++){
+    repNow=r; hudUpdate(reps,repNow);
+    await speak(String(r));
+    await wait(700);
+    await speak("arriba");
+    await wait(700);
+    await speak("abajo");
+    await wait(Math.max(0, state.current.cadence - 1400));
+  }
+
+  // Registrar
+  ex.performed.push({reps,weight:+weight});
+  if(ex.performed.length>=ex.planned.length) ex.done=true;
+  persist();
+
+  hudHide();
+  render();
+  await startRest(ex.rest);
+
+  // Auto-siguiente serie del MISMO ejercicio
+  if(state.autoNext){
+    const againCard = document.querySelector(`.exercise[data-ei="${ei}"]`);
+    const btn = againCard?.querySelector('[data-act="startSeries"]');
+    if(btn) btn.click();
+  }
+}
+
+/* ===== Descanso con avisos en decenas + 3-2-1 + bip final largo ===== */
+function startRest(seconds){
+  return new Promise(async res=>{
+    state.current.phase="rest";
+    state.current.restLeft = seconds;
+    state.current.paused = false;
+    updateRestBar();
+    await speak(`Iniciamos descanso de ${seconds} segundos`);
+
+    async function tick(){
+      if(state.current.phase!=="rest"){ updateRestBar(); return res(); }
+      if(!state.current.paused){
+        state.current.restLeft--;
+        const t = state.current.restLeft;
+
+        if(t>0 && t%10===0){ await beep(520,90,0.09); await speak(`${t} segundos`); }
+        if([3,2,1].includes(t)){ await beep(400+ t*200,120,0.1); }
+
+        updateRestBar();
+
+        if(t<=0){
+          await beep(1200,260,0.14);
+          await speak("Descanso terminado");
+          state.current.phase="idle"; updateRestBar();
+          return res();
+        }
+      }
+      setTimeout(tick,1000);
+    }
+    tick();
+  });
+}
+
+/* ===== Eventos ===== */
+document.addEventListener("click", (e)=>{
+  const btn = e.target.closest("button"); if(!btn) return;
+
+  if(btn.id==="btnUnlock"){ ensureAudio(); snack("Audio listo"); return; }
+
+  if(btn.id==="btnSave"){ persist(); beep(750,100); snack("Guardado"); return; }
+
+  if(btn.id==="btnResetDay"){
+    state.routine.forEach(ex=>{ ex.performed=[]; ex.done=false; });
+    persist(); render(); snack("Día reiniciado"); return;
+  }
+
+  if(btn.id==="btnStartDay"){
+    ensureAudio();
+    const idx = state.routine.findIndex(x=>x.performed.length < x.planned.length);
+    if(idx>=0){
+      const b = document.querySelector(`.exercise[data-ei="${idx}"] [data-act="startSeries"]`);
+      if(b) b.click(); else snack("No hay series para iniciar");
+    } else {
+      snack("Todo completado 👏");
+    }
+    return;
+  }
+
+  const act = btn.dataset.act;
+  if(!act) return;
+
+  const card = e.target.closest(".exercise"); if(!card) return;
+  const ei = +card.dataset.ei;
+  const ex = state.routine[ei];
+  const item = card.querySelector(".seriesItem");
+  const repsEl = item?.querySelector('[data-val="reps"]');
+  const wEl = item?.querySelector('[data-val="weight"]');
+
+  if(act==="rep-"){ repsEl.textContent = Math.max(1, +repsEl.textContent - 1); }
+  if(act==="rep+"){ repsEl.textContent = +repsEl.textContent + 1; }
+  if(act==="w-"){ wEl.textContent = (+wEl.textContent - 0.5).toFixed(1); }
+  if(act==="w+"){ wEl.textContent = (+wEl.textContent + 0.5).toFixed(1); }
+
+  if(act==="addSeries"){
+    const lastPlan = ex.planned[ex.planned.length-1] || {reps:10,weight:(ex.performed[0]?.weight||50)};
+    ex.planned.push({ ...lastPlan });
+    persist(); render(); snack("+1 serie añadida");
+  }
+
+  if(act==="startExercise"){
+    const b = card.querySelector('[data-act="startSeries"]');
+    if(b) b.click(); else snack("Ejercicio ya completado");
+  }
+
+  if(act==="startSeries"){
+    ensureAudio();
+    if(!item){ snack("Sin serie pendiente"); return; }
+    const si = ex.performed.length; // la pendiente exacta
+    item.classList.remove("editable"); item.classList.add("running");
+    const reps = +repsEl.textContent;
+    const weight = +wEl.textContent;
+    runSeries(ei, si, reps, weight);
+  }
+
+  if(act==="pauseRest"){
+    state.current.paused = !state.current.paused;
+    if(!state.current.paused && state.current.restLeft < 10) state.current.restLeft = 10;
+    updateRestBar();
+  }
+
+  if(act==="skipRest"){
+    state.current.phase="idle"; updateRestBar();
+    // No cambia de ejercicio; si hay siguiente serie del mismo y autoNext, lánzala
+    if(state.autoNext){
+      const b = card.querySelector('[data-act="startSeries"]');
+      if(b) b.click();
+    }
+  }
 });
-document.getElementById('autoNext').addEventListener('change',e=>{state.autoNext=e.target.checked;save();});
 
-/* ---- Inicio ---- */
+document.getElementById('autoNext').addEventListener('change',(e)=>{
+  state.autoNext = e.target.checked; persist();
+});
+
+/* ===== Inicio ===== */
+document.getElementById('btnUnlock').addEventListener('click',ensureAudio);
 render();
 </script>
 </body>
