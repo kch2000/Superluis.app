@@ -1,11 +1,9 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>SuperLuis.app – Rutina diaria</title>
-<meta name="theme-color" content="#0e0f12" />
-<link rel="manifest" href="manifest.webmanifest" />
 <style>
   :root{
     --bg:#0e0f12;--card:#171a20;--muted:#8a9099;--fg:#e9edf2;--accent:#5dd0ff;
@@ -52,10 +50,10 @@
   .muted{color:var(--muted)}
   .sep{height:1px;background:var(--line);margin:12px 0}
   footer{height:42px}
-  .install{position:fixed;right:12px;bottom:12px;z-index:50}
 </style>
 </head>
 <body>
+
 <header>
   <div class="bar">
     <div class="title">🏋️‍♂️ SuperLuis – Rutina de hoy</div>
@@ -71,11 +69,6 @@
   <div id="restBanner" class="rest-card yellow hide">
     ⏱️ Descanso: <b id="restLeft">0</b> s
     <span class="muted"> · Pausa / Saltar disponibles</span>
-    <div class="actions" style="margin-top:6px">
-      <button id="btnRestPause" class="ghost">⏸️ Pausa</button>
-      <button id="btnRestResume" class="ghost" disabled>▶ Reanudar</button>
-      <button id="btnRestSkip" class="warn">⏩ Saltar descanso</button>
-    </div>
   </div>
 </header>
 
@@ -84,98 +77,131 @@
     <button id="btnReset" class="ghost">↺ Reset día</button>
     <button id="btnGuardar" class="ok">💾 Guardar</button>
   </div>
+
   <div id="exercises" class="grid"></div>
 </main>
 <footer></footer>
 
-<button id="btnInstall" class="primary install" style="display:none">📲 Instalar app</button>
-
 <script>
-/* ===== PERSISTENCIA ===== */
+/* ------------------ Utilidades ------------------ */
 const $ = s => document.querySelector(s);
-const persist = { key:'sl_routine_v2', save:d=>localStorage.setItem('sl_routine_v2',JSON.stringify(d)), load:()=>{try{return JSON.parse(localStorage.getItem('sl_routine_v2'))}catch(e){return null}} };
-
-/* ===== PLAN DEMO (EDITABLE) ===== */
-const defaultPlan = [
-  { id:'ex1', nombre:'Seated Chest Press', maquina:'L070', descanso:60, series:[
-    {targetReps:10, reps:10, peso:57, done:false},
-    {targetReps:10, reps:10, peso:57, done:false},
-    {targetReps:10, reps:10, peso:57, done:false},
-  ]},
-  { id:'ex2', nombre:'Lat Pully Convergent', maquina:'Convergent 72.5', descanso:75, series:[
-    {targetReps:5, reps:5, peso:72.5, done:false},
-    {targetReps:5, reps:5, peso:72.5, done:false},
-    {targetReps:5, reps:5, peso:72.5, done:false},
-  ]},
-  { id:'ex3', nombre:'Seated Row', maquina:'L090', descanso:60, series:[
-    {targetReps:6, reps:6, peso:70, done:false},
-    {targetReps:6, reps:6, peso:70, done:false},
-  ]},
-];
-
-let state = persist.load() || { autoNext:true, current:{ex:0,serie:0,mode:'idle'}, plan:defaultPlan };
-$('#autoNext').checked = state.autoNext;
-$('#autoNext').addEventListener('change',e=>{ state.autoNext=e.target.checked; persist.save(state); });
-
-/* ===== AUDIO / VOZ ===== */
-const fmt = n=>String(n).padStart(2,'0');
-const beep = (hz=880,ms=120,gain=0.06)=>{ try{
+const $$ = s => document.querySelectorAll(s);
+const fmt = n => String(n).padStart(2,'0');
+const beep = (hz=880,ms=120,gain=0.06) => {
   const ac = new (window.AudioContext||window.webkitAudioContext)();
   const o = ac.createOscillator(); const g = ac.createGain();
-  o.type='square'; o.frequency.value=hz; g.gain.value=gain; o.connect(g).connect(ac.destination);
-  o.start(); setTimeout(()=>{o.stop();ac.close()}, ms);
-}catch{} };
-
-const speakQueue = (()=>{
+  o.type='square'; o.frequency.value=hz; g.gain.value=gain;
+  o.connect(g).connect(ac.destination); o.start();
+  setTimeout(()=>{o.stop();ac.close()}, ms);
+};
+const speakQueue = (()=>{ // cola para evitar solapes
   let speaking=false, q=[];
-  const next=()=>{ if(speaking||!q.length) return;
-    speaking=true; const {text,onend} = q.shift();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang='es-ES'; u.rate=1.03; u.pitch=1.0;
+  const next=()=>{ if(speaking||q.length===0) return;
+    speaking=true; const {text, onend} = q.shift();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='es-ES'; u.rate=1.02; u.pitch=1.0;
     u.onend=()=>{ speaking=false; onend&&onend(); next(); };
     speechSynthesis.speak(u);
   };
   return (text,onend)=>{ q.push({text,onend}); next(); };
 })();
+const persist = {
+  key:'sl_routine_v1',
+  save(data){ localStorage.setItem(this.key, JSON.stringify(data)); },
+  load(){ try{ return JSON.parse(localStorage.getItem(this.key)) }catch(e){ return null } }
+};
 
-/* ===== RENDER ===== */
+/* ------------------ Datos demo (editable) ------------------ */
+const defaultPlan = [
+  {
+    id:'ex1',
+    nombre:'Seated Chest Press',
+    maquina:'L070',
+    descanso:60,
+    series:[
+      {targetReps:10, reps:10, peso:57, done:false},
+      {targetReps:10, reps:10, peso:57, done:false},
+      {targetReps:10, reps:10, peso:57, done:false}
+    ]
+  },
+  {
+    id:'ex2',
+    nombre:'Lat Pully Convergent',
+    maquina:'Convergent 72.5',
+    descanso:75,
+    series:[
+      {targetReps:5, reps:5, peso:72.5, done:false},
+      {targetReps:5, reps:5, peso:72.5, done:false},
+      {targetReps:5, reps:5, peso:72.5, done:false}
+    ]
+  },
+  {
+    id:'ex3',
+    nombre:'Seated Row',
+    maquina:'L090',
+    descanso:60,
+    series:[
+      {targetReps:6, reps:6, peso:70, done:false},
+      {targetReps:6, reps:6, peso:70, done:false}
+    ]
+  }
+];
+
+let state = persist.load() || {
+  autoNext:true,
+  current:{ ex:0, serie:0, mode:'idle' }, // idle | reps | rest
+  plan: defaultPlan
+};
+
+$('#autoNext').checked = !!state.autoNext;
+$('#autoNext').addEventListener('change', e=>{
+  state.autoNext = e.target.checked;
+  persist.save(state);
+});
+
+/* ------------------ Render ------------------ */
 function render(){
   const wrap = $('#exercises'); wrap.innerHTML='';
   state.plan.forEach((ex, ei)=>{
     const card = document.createElement('div'); card.className='card';
-    card.innerHTML = `
-      <div class="exercise-head">
-        <div>
-          <div class="exercise-title">${ex.nombre}</div>
-          <div class="badge">Máquina: ${ex.maquina} · Descanso <b>${ex.descanso}</b> s</div>
-        </div>
-        <div class="actions">
-          <button class="primary" data-action="start-ex" data-e="${ei}">▶ Empezar ejercicio</button>
-          <button class="ghost" data-action="add-serie" data-e="${ei}">＋ Serie</button>
-          <button class="ghost" data-action="rest-edit" data-e="${ei}">⚙️ Descanso</button>
-        </div>
+    // encabezado
+    const head = document.createElement('div'); head.className='exercise-head';
+    head.innerHTML = `
+      <div>
+        <div class="exercise-title">${ex.nombre}</div>
+        <div class="badge">Máquina: ${ex.maquina} · Descanso <b>${ex.descanso}</b> s</div>
       </div>
-      <div class="series" data-e="${ei}"></div>
+      <div class="actions">
+        <button class="primary" data-action="start-ex" data-e="${ei}">▶ Empezar ejercicio</button>
+        <button class="ghost" data-action="add-serie" data-e="${ei}">＋ Serie</button>
+        <button class="ghost" data-action="rest-edit" data-e="${ei}">⚙️ Descanso</button>
+      </div>
     `;
-    const list = card.querySelector('.series');
+    card.appendChild(head);
+
+    // series
+    const list = document.createElement('div'); list.className='series';
     ex.series.forEach((s, si)=>{
       const isLive = state.current.mode!=='idle' && state.current.ex===ei && state.current.serie===si;
-      const onlyCurrentShown = state.current.mode!=='idle' && state.current.ex===ei;
       const div = document.createElement('div');
-      div.className='serie '+(isLive?'live':(s.done?'done':'editable'));
-      if(onlyCurrentShown && si!==state.current.serie) div.style.display='none';
+      div.className = 'serie ' + (isLive ? 'live' : (s.done ? 'done' : 'editable'));
+      // mostrar solo la serie en curso si el ejercicio está en marcha; si está idle mostrar todas
+      const shouldHide = (state.current.mode!=='idle' && state.current.ex===ei && si!==state.current.serie);
+      if(shouldHide) div.style.display='none';
+
       div.innerHTML = `
         <div class="serie-header">
           <div class="chips">
             <div class="chip">Serie <b>${si+1}</b></div>
             <div class="chip">Objetivo: ${s.targetReps} rep</div>
-            <div class="chip">Estado: ${s.done?'✅ Completada':(isLive?'⏳ En curso':'Pendiente')}</div>
+            <div class="chip">Estado: ${s.done?'✅ Completada': (isLive?'⏳ En curso':'Pendiente')}</div>
           </div>
           <div class="actions">
-            ${(!isLive && !s.done)?`<button class="ok" data-action="start-serie" data-e="${ei}" data-s="${si}">▶ Iniciar serie</button>`:''}
-            ${(!isLive && !s.done)?`<button class="danger" data-action="del-serie" data-e="${ei}" data-s="${si}">🗑️</button>`:''}
+            ${!isLive && !s.done ? `<button data-action="start-serie" data-e="${ei}" data-s="${si}" class="ok">▶ Iniciar serie</button>`:''}
+            ${!isLive && !s.done ? `<button data-action="del-serie" data-e="${ei}" data-s="${si}" class="danger">🗑️</button>`:''}
           </div>
         </div>
+
         <div class="row" style="margin-top:8px">
           <div>
             <div class="muted" style="font-size:.85rem;margin-bottom:4px">Peso (kg)</div>
@@ -195,97 +221,120 @@ function render(){
           </div>
           <div class="muted">Previsto: ${s.targetReps} rep</div>
         </div>
-        ${isLive?`
-          <div class="sep"></div>
-          <div class="actions">
-            <button class="ok" data-action="mark-done" data-e="${ei}" data-s="${si}">✔ Terminar serie</button>
-          </div>
-        `:''}
+
+        ${isLive ? `
+        <div class="sep"></div>
+        <div class="actions">
+          <button data-action="mark-done" data-e="${ei}" data-s="${si}" class="ok">✔ Terminar serie</button>
+        </div>`:''}
       `;
       list.appendChild(div);
     });
+    card.appendChild(list);
     wrap.appendChild(card);
   });
+
+  // HUD
   $('#hudState').innerHTML = `Estado: <b>${state.current.mode==='idle'?'Listo': (state.current.mode==='reps'?'Serie en curso':'Descanso')}</b>`;
   persist.save(state);
 }
 render();
 
-/* ===== LÓGICA DE SERIES / DESCANSO ===== */
-const $$ = s=>document.querySelectorAll(s);
-let repTimer=null, restTimer=null, repCount=0, repTarget=0, restLeft=0, paused=false;
-function clearAll(){ if(repTimer){clearInterval(repTimer);repTimer=null} if(restTimer){clearInterval(restTimer);restTimer=null} }
+/* ------------------ Lógica Series / Descanso ------------------ */
+let repTimer=null, restTimer=null, repCount=0, repTarget=0, restLeft=0;
+function clearAllTimers(){ if(repTimer){clearInterval(repTimer);repTimer=null} if(restTimer){clearInterval(restTimer);restTimer=null} }
 
 function startExercise(ei){
+  // abre ejercicio y arranca primera serie como pediste
   if(state.plan[ei].series.every(s=>s.done)) return;
   const si = state.plan[ei].series.findIndex(s=>!s.done);
   startSerie(ei, Math.max(0, si));
 }
 
 function startSerie(ei, si){
-  clearAll();
+  clearAllTimers();
   const ex = state.plan[ei]; const s = ex.series[si];
+  // bloquear edición
   state.current = {ex:ei, serie:si, mode:'reps'};
   repTarget = s.reps; repCount=0;
-  $('#restBanner').classList.add('hide');
   $('#hudReps').innerHTML = `Reps: <b>0/${repTarget}</b>`;
+  $('#restBanner').classList.add('hide');
   render();
+
+  // Voz de inicio
   speakQueue(`Empezamos serie ${si+1}. ${repTarget} repeticiones.`, ()=>{
+    // contar repeticiones con voz y cadencia 1.2s aprox
     repTimer = setInterval(()=>{
-      if(repCount>=repTarget){ clearInterval(repTimer); repTimer=null; endSerie(ei, si); return; }
-      repCount++; $('#hudReps').innerHTML = `Reps: <b>${repCount}/${repTarget}</b>`;
+      if(repCount>=repTarget){ clearInterval(repTimer); repTimer=null; endSerie(ei, si); return;}
+      repCount++;
+      $('#hudReps').innerHTML = `Reps: <b>${repCount}/${repTarget}</b>`;
+      // voz “Arriba / Abajo” + número
       speakQueue(`${repCount}. Arriba... Abajo...`);
     }, 1200);
   });
 }
 
 function endSerie(ei, si){
-  state.plan[ei].series[si].done = true; render();
-  startRest(ei); // pasa al descanso del ejercicio actual
+  // marcar hecha
+  state.plan[ei].series[si].done = true;
+  render();
+  // iniciar descanso sincronizado
+  startRest(ei, si);
 }
 
-function startRest(ei){
+let paused=false, pausedAt=0;
+function startRest(ei, si){
   const ex = state.plan[ei];
-  restLeft = ex.descanso; paused=false;
+  restLeft = ex.descanso;
   state.current.mode='rest';
   $('#restBanner').classList.remove('hide');
+  $('#hudTimer').innerHTML = `Tiempo: <b>${fmt(Math.floor(restLeft/60))}:${fmt(restLeft%60)}</b>`;
   $('#restLeft').textContent = restLeft;
-  hudTime(restLeft);
+  render();
   speakQueue(`Iniciamos descanso de ${restLeft} segundos.`);
 
   clearInterval(restTimer);
   restTimer = setInterval(()=>{
     if(paused) return;
-    restLeft--; $('#restLeft').textContent = restLeft; hudTime(restLeft);
+    restLeft--;
+    $('#restLeft').textContent = restLeft;
+    $('#hudTimer').innerHTML = `Tiempo: <b>${fmt(Math.floor(restLeft/60))}:${fmt(restLeft%60)}</b>`;
+
+    // Avisos 30/20/10 y bips
     if([30,20,10].includes(restLeft)){ speakQueue(`${restLeft} segundos`); beep(700,100); }
-    if(restLeft===3) beep(700,120);
-    if(restLeft===2) beep(900,130);
-    if(restLeft===1) beep(1200,200,0.08);
+    // 3,2,1 con bips distintos
+    if(restLeft===3){ beep(700,120) }
+    if(restLeft===2){ beep(900,130) }
+    if(restLeft===1){ beep(1200,200,0.08) }
+
     if(restLeft<=0){
       clearInterval(restTimer); restTimer=null;
       $('#restBanner').classList.add('hide');
+      // siguiente serie automática dentro del MISMO ejercicio
       const next = ex.series.findIndex(s=>!s.done);
       if(next>=0){
         if(state.autoNext){ startSerie(ei, next); }
         else{ state.current.mode='idle'; render(); }
       }else{
+        // ejercicio completado -> idle y tarjeta queda en verde (done)
         state.current.mode='idle'; render();
       }
     }
   },1000);
 }
-function hudTime(sec){ $('#hudTimer').innerHTML = `Tiempo: <b>${fmt(Math.floor(sec/60))}:${fmt(sec%60)}</b>` }
 
-/* ===== EVENTOS ===== */
+/* ------------------ Eventos globales ------------------ */
 document.addEventListener('click', e=>{
   const el = e.target.closest('button'); if(!el) return;
   const a = el.dataset.action;
   if(a==='start-ex'){ startExercise(+el.dataset.e); return; }
   if(a==='start-serie'){ startSerie(+el.dataset.e, +el.dataset.s); return; }
   if(a==='del-serie'){
-    const ei=+el.dataset.e, si=+el.dataset.s;
+    const ei=+el.dataset.e, si=+el.dataset.s; 
     if(state.plan[ei].series[si].done) return;
-    state.plan[ei].series.splice(si,1); render(); return;
+    state.plan[ei].series.splice(si,1);
+    // re-render
+    render(); return;
   }
   if(a==='peso-inc'||a==='peso-dec'||a==='reps-inc'||a==='reps-dec'){
     const ei=+el.dataset.e, si=+el.dataset.s; const s=state.plan[ei].series[si];
@@ -296,66 +345,98 @@ document.addEventListener('click', e=>{
     if(a==='reps-dec') s.reps = Math.max(1, s.reps-1);
     render(); return;
   }
+  if(a==='rest-edit'){
+    const ei=+el.dataset.e; const val = prompt('Segundos de descanso para este ejercicio:', state.plan[ei].descanso);
+    if(!val) return; const n = Math.max(10, parseInt(val,10)||60);
+    state.plan[ei].descanso = n; render(); return;
+  }
   if(a==='mark-done'){
     const ei=+el.dataset.e, si=+el.dataset.s;
     if(state.current.mode!=='reps') return;
-    clearAll(); endSerie(ei, si); return;
+    clearAllTimers();
+    endSerie(ei, si);
+    return;
   }
 });
 
 document.addEventListener('input', e=>{
   const inp = e.target;
-  if(!inp.matches('[data-field="peso"],[data-field="reps"]')) return;
-  // localizar indices
-  const card = inp.closest('.card');
-  const ei = [...$('#exercises').children].indexOf(card);
-  const seriesWrap = card.querySelector('.series');
-  const si = [...seriesWrap.children].indexOf(inp.closest('.serie'));
-  const s = state.plan[ei].series[si];
-  if(inp.dataset.field==='peso'){
-    let v=parseFloat(inp.value.replace(',','.')); if(isNaN(v)) v=s.peso; s.peso=+v.toFixed(1);
-  }else{
-    let v=parseInt(inp.value,10); if(isNaN(v)) v=s.reps; s.reps=Math.max(1,Math.min(120,v));
+  if(inp.matches('[data-field="peso"],[data-field="reps"]')){
+    const card = inp.closest('.serie'); const ei = [...$('#exercises').children].indexOf(inp.closest('.card'));
+    // localizar serie por índice visual
+    const nodes=[...inp.closest('.series').children];
+    const si=nodes.indexOf(inp.closest('.serie'));
+    const s=state.plan[ei].series[si];
+    if(inp.dataset.field==='peso'){
+      let v=parseFloat(inp.value.replace(',','.')); if(isNaN(v)) v=s.peso;
+      s.peso=+v.toFixed(1);
+    }else{
+      let v=parseInt(inp.value,10); if(isNaN(v)) v=s.reps;
+      s.reps=Math.max(1, Math.min(120, v));
+    }
+    persist.save(state);
   }
-  persist.save(state);
 });
 
-/* Descanso: Pausa/Resume/Skip */
-$('#btnRestPause').onclick = ()=>{ if(state.current.mode!=='rest') return; paused=true; $('#btnRestPause').disabled=true; $('#btnRestResume').disabled=false; };
-$('#btnRestResume').onclick = ()=>{ if(state.current.mode!=='rest') return; if(restLeft<10) restLeft=10; paused=false; $('#btnRestPause').disabled=false; $('#btnRestResume').disabled=true; };
-$('#btnRestSkip').onclick = ()=>{
-  if(state.current.mode!=='rest') return;
-  const ei = state.current.ex; const ex = state.plan[ei];
-  clearInterval(restTimer); restTimer=null; $('#restBanner').classList.add('hide');
-  const next = ex.series.findIndex(s=>!s.done);
-  if(next>=0){ startSerie(ei, next); } else { state.current.mode='idle'; render(); }
-};
+/* Botones superiores */
+$('#btnGuardar').addEventListener('click', ()=>{
+  persist.save(state); beep(1000,150,0.07);
+});
 
-/* Guardar/Reset */
-$('#btnGuardar').onclick = ()=>{ persist.save(state); beep(1000,150,0.07); };
-$('#btnReset').onclick = ()=>{
-  if(!confirm('¿Reiniciar el día?')) return;
-  clearAll();
+$('#btnReset').addEventListener('click', ()=>{
+  if(!confirm('¿Reiniciar el día? Se borrarán series completadas.')) return;
+  clearAllTimers();
   state = { autoNext: $('#autoNext').checked, current:{ex:0,serie:0,mode:'idle'}, plan: JSON.parse(JSON.stringify(defaultPlan)) };
-  $('#restBanner').classList.add('hide'); render();
-};
-
-/* ===== INSTALACIÓN (A2HS) ===== */
-let deferredPrompt=null;
-window.addEventListener('beforeinstallprompt', (e)=>{
-  e.preventDefault(); deferredPrompt=e; $('#btnInstall').style.display='inline-block';
+  $('#restBanner').classList.add('hide');
+  render();
 });
-$('#btnInstall').onclick = async ()=>{
-  if(!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt=null; $('#btnInstall').style.display='none';
-};
 
-/* ===== SERVICE WORKER ===== */
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./service-worker.js'); });
-}
+/* ------------------ Controles de descanso (pausa/saltar) ------------------ */
+// Creamos controles flotantes dentro del banner
+(function mountRestControls(){
+  const b = document.createElement('div'); b.style.marginTop='6px';
+  b.innerHTML = `
+    <div class="actions">
+      <button id="btnRestPause" class="ghost">⏸️ Pausa</button>
+      <button id="btnRestResume" class="ghost" disabled>▶ Reanudar</button>
+      <button id="btnRestSkip" class="warn">⏩ Saltar descanso</button>
+    </div>
+  `;
+  $('#restBanner').appendChild(b);
+
+  $('#btnRestPause').onclick = ()=>{
+    if(state.current.mode!=='rest') return;
+    paused=true; pausedAt = restLeft;
+    $('#btnRestPause').disabled=true;
+    $('#btnRestResume').disabled=false;
+  };
+  $('#btnRestResume').onclick = ()=>{
+    if(state.current.mode!=='rest') return;
+    // al reanudar, si restLeft < 10, subimos a 10
+    if(restLeft<10) restLeft=10;
+    paused=false;
+    $('#btnRestPause').disabled=false;
+    $('#btnRestResume').disabled=true;
+  };
+  $('#btnRestSkip').onclick = ()=>{
+    if(state.current.mode!=='rest') return;
+    // saltar descanso -> directamente a la siguiente serie del MISMO ejercicio
+    const {ex, serie} = state.current;
+    clearInterval(restTimer); restTimer=null;
+    $('#restBanner').classList.add('hide');
+    const currEx = state.plan[ex];
+    const next = currEx.series.findIndex(s=>!s.done);
+    if(next>=0){ startSerie(ex, next); }
+    else{ state.current.mode='idle'; render(); }
+  };
+})();
+
+/* ------------------ Cargar estado al abrir ------------------ */
+window.addEventListener('load', ()=>{
+  // restaurar autoNext pill
+  $('#autoNext').checked = state.autoNext;
+  render();
+});
 </script>
 </body>
 </html>
