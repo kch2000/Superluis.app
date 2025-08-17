@@ -11,7 +11,7 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Roboto,Arial}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Roboto,Arial,Segoe UI}
 header{position:sticky;top:0;padding:10px;background:var(--panel);border-bottom:1px solid var(--border);z-index:20}
 h1{margin:0;font-size:18px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -32,10 +32,8 @@ main{padding:12px;padding-bottom:96px}
   border-radius:999px;padding:4px 8px;background:#0b1322}
 .value{min-width:32px;display:inline-block;text-align:center}
 .muted{color:var(--muted)}
-/* Barra descanso fija */
 #restBar{position:sticky;top:56px;display:none;background:var(--warn);color:#111;
   padding:10px;border-bottom:1px solid #000;z-index:15}
-/* HUD serie en curso */
 #hud{position:fixed;left:0;right:0;bottom:0;background:rgba(17,24,39,.92);
   border-top:1px solid var(--border);padding:10px 12px;display:none;z-index:25}
 #hud .title{font-weight:700}
@@ -43,7 +41,6 @@ main{padding:12px;padding-bottom:96px}
 #hud .sub{color:var(--muted);font-size:13px}
 #snack{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;background:#000c;
   color:#fff;padding:8px 12px;border-radius:8px;display:none;z-index:40}
-/* Overlay audio */
 #unlock{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:50}
 #unlock .box{background:#0b1220;border:1px solid var(--border);border-radius:14px;padding:18px;max-width:360px}
 </style>
@@ -64,7 +61,6 @@ main{padding:12px;padding-bottom:96px}
 <div id="restBar"></div>
 <main id="app"></main>
 
-<!-- HUD de serie en curso -->
 <div id="hud">
   <div class="title" id="hudTitle">Serie</div>
   <div class="big" id="hudCount">—</div>
@@ -73,7 +69,6 @@ main{padding:12px;padding-bottom:96px}
 
 <div id="snack"></div>
 
-<!-- Desbloqueo de audio/voz -->
 <div id="unlock">
   <div class="box">
     <h3 style="margin:0 0 6px 0">Activar audio</h3>
@@ -85,7 +80,7 @@ main{padding:12px;padding-bottom:96px}
 </div>
 
 <script>
-/* ========== Estado inicial ========== */
+/* ===== Estado ===== */
 const initRoutine = [{
   name:"Seated Chest Press", machine:"L070", rest:20,
   planned:[{reps:10,weight:57},{reps:10,weight:57},{reps:10,weight:57}],
@@ -102,13 +97,9 @@ const state = {
   audioReady:false,
   autoNext: JSON.parse(localStorage.getItem("sl_autoNext")||"true")
 };
+function persist(){ localStorage.setItem("sl_routine", JSON.stringify(state.routine)); localStorage.setItem("sl_autoNext", state.autoNext); }
 
-function persist(){
-  localStorage.setItem("sl_routine", JSON.stringify(state.routine));
-  localStorage.setItem("sl_autoNext", state.autoNext);
-}
-
-/* ========== Audio / Voz ========== */
+/* ===== Audio / Voz ===== */
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let actx=null;
 function ensureAudio(){
@@ -117,34 +108,29 @@ function ensureAudio(){
   state.audioReady = true;
   document.getElementById('unlock').style.display="none";
 }
-
-async function beep(freq=880,ms=120){
+function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+async function beep(freq=880,ms=120,vol=0.08){
   if(!state.audioReady) return;
   const o=actx.createOscillator(), g=actx.createGain();
-  o.frequency.value=freq; g.gain.value=0.08; // volumen bajo
+  o.frequency.value=freq; g.gain.value=vol;
   o.connect(g); g.connect(actx.destination); o.start(); await wait(ms); o.stop();
 }
-
 function speak(text, max=2500){
-  // No bloquea el flujo si TTS no disponible
   if(!state.audioReady || !("speechSynthesis" in window)) return Promise.resolve();
   try { speechSynthesis.cancel(); } catch(e){}
   return new Promise(res=>{
     const u = new SpeechSynthesisUtterance(text);
     u.lang="es-ES";
-    let done=false;
-    const to = setTimeout(()=>{ if(!done){ done=true; res(); } }, max);
-    u.onend=()=>{ if(!done){ done=true; clearTimeout(to); res(); } };
+    let fin=false;
+    const to = setTimeout(()=>{ if(!fin){ fin=true; res(); } }, max);
+    u.onend=()=>{ if(!fin){ fin=true; clearTimeout(to); res(); } };
     speechSynthesis.speak(u);
   });
 }
-
-/* ========== Utiles ========== */
 const $ = s=>document.querySelector(s);
-function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function snack(msg){ const n=$("#snack"); n.textContent=msg; n.style.display="block"; setTimeout(()=>n.style.display="none",1500); }
 
-/* ========== Render ========== */
+/* ===== Render ===== */
 function render(){
   const app=$("#app"); app.innerHTML="";
   state.routine.forEach((ex,ei)=>{
@@ -162,11 +148,12 @@ function render(){
       </div>
       <div class="muted" style="margin-top:8px">Historial: ${ex.performed.map(s=>`${s.reps}×${s.weight}kg`).join(" · ")||"—"}</div>
     `;
-    // Solo mostrar la serie pendiente (editable)
+    // Mostrar solo la primera serie pendiente, JAMÁS salta
     if(!done){
       const si = ex.performed.length;
-      const last = ex.performed[si-1];
-      const base = last ? {...last} : ex.planned[si];
+      const lastDone = ex.performed[si-1];
+      const plan = ex.planned[si] || ex.planned[ex.planned.length-1] || {reps:10,weight:50};
+      const base = lastDone ? {...lastDone} : plan;
       const wrap = sec.querySelector(".seriesWrap");
       const item = document.createElement("div");
       item.className="seriesItem editable";
@@ -203,51 +190,47 @@ function updateRestBar(){
     <button data-act="skipRest" class="warn">Saltar</button>
   `;
 }
-
-/* ========== HUD Serie ========== */
 function hudShow(exName, reps, current){
   $("#hudTitle").textContent = exName;
   $("#hudCount").textContent = `Reps: ${current}/${reps}`;
   $("#hud").style.display="block";
 }
-function hudUpdate(reps, current){
-  $("#hudCount").textContent = `Reps: ${current}/${reps}`;
-}
+function hudUpdate(reps, current){ $("#hudCount").textContent = `Reps: ${current}/${reps}`; }
 function hudHide(){ $("#hud").style.display="none"; }
 
-/* ========== Lógica de serie (sin cuelgues) ========== */
+/* ===== Serie ===== */
 async function runSeries(ei, si, reps, weight){
-  // Visual inmediato para que "se note" que arranca
   const ex = state.routine[ei];
+  if(!ex || si!==ex.performed.length){ // seguridad: siempre la pendiente exacta
+    render(); return snack("Reajustado a la serie pendiente");
+  }
+
   const card = document.querySelector(`.exercise[data-ei="${ei}"]`);
   const item = card?.querySelector(".seriesItem");
   if(item){ item.classList.remove("editable"); item.classList.add("running"); }
+
   hudShow(`${ex.name} (${ex.machine})`, reps, 0);
-  // Confirmación inmediata
-  await beep(900,90);
+  await beep(900,110);
   await speak(`Empezamos serie ${si+1}`);
 
   state.current = { ...state.current, phase:"series", exIdx:ei, sIdx:si };
 
-  // Cadencia por rep (2s): número, "arriba", "abajo"
   let repNow = 0;
   for(let r=1;r<=reps;r++){
     repNow=r; hudUpdate(reps,repNow);
-    // voz (no bloquea si no hay TTS)
-    speak(String(r));
+    await speak(String(r));
     await wait(700);
-    speak("arriba");
+    await speak("arriba");
     await wait(700);
-    speak("abajo");
-    await wait(state.current.cadence - 1400); // resto hasta 2s aprox
+    await speak("abajo");
+    await wait(Math.max(0, state.current.cadence - 1400));
   }
 
-  // Registrar como realizada la serie
+  // Registrar
   ex.performed.push({reps,weight:+weight});
   if(ex.performed.length>=ex.planned.length) ex.done=true;
   persist();
 
-  // Fin serie → descanso
   hudHide();
   render();
   await startRest(ex.rest);
@@ -260,6 +243,7 @@ async function runSeries(ei, si, reps, weight){
   }
 }
 
+/* ===== Descanso con avisos en decenas + 3-2-1 + bip final largo ===== */
 function startRest(seconds){
   return new Promise(async res=>{
     state.current.phase="rest";
@@ -272,9 +256,15 @@ function startRest(seconds){
       if(state.current.phase!=="rest"){ updateRestBar(); return res(); }
       if(!state.current.paused){
         state.current.restLeft--;
-        if([3,2,1].includes(state.current.restLeft)) beep(400+state.current.restLeft*200,120);
+        const t = state.current.restLeft;
+
+        if(t>0 && t%10===0){ await beep(520,90,0.09); await speak(`${t} segundos`); }
+        if([3,2,1].includes(t)){ await beep(400+ t*200,120,0.1); }
+
         updateRestBar();
-        if(state.current.restLeft<=0){
+
+        if(t<=0){
+          await beep(1200,260,0.14);
           await speak("Descanso terminado");
           state.current.phase="idle"; updateRestBar();
           return res();
@@ -286,7 +276,7 @@ function startRest(seconds){
   });
 }
 
-/* ========== Eventos ========== */
+/* ===== Eventos ===== */
 document.addEventListener("click", (e)=>{
   const btn = e.target.closest("button"); if(!btn) return;
 
@@ -300,12 +290,11 @@ document.addEventListener("click", (e)=>{
   }
 
   if(btn.id==="btnStartDay"){
-    // Busca el primer ejercicio pendiente y arranca su serie
     ensureAudio();
     const idx = state.routine.findIndex(x=>x.performed.length < x.planned.length);
     if(idx>=0){
       const b = document.querySelector(`.exercise[data-ei="${idx}"] [data-act="startSeries"]`);
-      if(b){ b.click(); } else { snack("No hay series para iniciar"); }
+      if(b) b.click(); else snack("No hay series para iniciar");
     } else {
       snack("Todo completado 👏");
     }
@@ -315,9 +304,7 @@ document.addEventListener("click", (e)=>{
   const act = btn.dataset.act;
   if(!act) return;
 
-  // Clics dentro de un ejercicio
-  const card = e.target.closest(".exercise");
-  if(!card) return;
+  const card = e.target.closest(".exercise"); if(!card) return;
   const ei = +card.dataset.ei;
   const ex = state.routine[ei];
   const item = card.querySelector(".seriesItem");
@@ -330,14 +317,12 @@ document.addEventListener("click", (e)=>{
   if(act==="w+"){ wEl.textContent = (+wEl.textContent + 0.5).toFixed(1); }
 
   if(act==="addSeries"){
-    // Añade una serie al plan (editable en siguiente vuelta)
-    const base = ex.planned[ex.planned.length-1] || {reps:10,weight: (ex.performed[0]?.weight||50) };
-    ex.planned.push({ ...base });
-    persist(); render(); snack("+1 serie");
+    const lastPlan = ex.planned[ex.planned.length-1] || {reps:10,weight:(ex.performed[0]?.weight||50)};
+    ex.planned.push({ ...lastPlan });
+    persist(); render(); snack("+1 serie añadida");
   }
 
   if(act==="startExercise"){
-    // Equivalente a pulsar Iniciar serie (primera pendiente)
     const b = card.querySelector('[data-act="startSeries"]');
     if(b) b.click(); else snack("Ejercicio ya completado");
   }
@@ -345,9 +330,8 @@ document.addEventListener("click", (e)=>{
   if(act==="startSeries"){
     ensureAudio();
     if(!item){ snack("Sin serie pendiente"); return; }
-    // Bloquea edición durante la serie
+    const si = ex.performed.length; // la pendiente exacta
     item.classList.remove("editable"); item.classList.add("running");
-    const si = ex.performed.length;
     const reps = +repsEl.textContent;
     const weight = +wEl.textContent;
     runSeries(ei, si, reps, weight);
@@ -360,8 +344,8 @@ document.addEventListener("click", (e)=>{
   }
 
   if(act==="skipRest"){
-    // Saltar descanso → continuar con siguiente serie del MISMO ejercicio
     state.current.phase="idle"; updateRestBar();
+    // No cambia de ejercicio; si hay siguiente serie del mismo y autoNext, lánzala
     if(state.autoNext){
       const b = card.querySelector('[data-act="startSeries"]');
       if(b) b.click();
@@ -373,7 +357,8 @@ document.getElementById('autoNext').addEventListener('change',(e)=>{
   state.autoNext = e.target.checked; persist();
 });
 
-/* ========== Inicio ========== */
+/* ===== Inicio ===== */
+document.getElementById('btnUnlock').addEventListener('click',ensureAudio);
 render();
 </script>
 </body>
