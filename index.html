@@ -1,442 +1,285 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>SuperLuis.app – Rutina diaria</title>
-<style>
-  :root{
-    --bg:#0e0f12;--card:#171a20;--muted:#8a9099;--fg:#e9edf2;--accent:#5dd0ff;
-    --ok:#1f9d55;--warn:#ffcc00;--danger:#ff4d4f;--line:#232733;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif}
-  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0e0f12 0%,rgba(14,15,18,.92) 100%);
-    border-bottom:1px solid var(--line);padding:10px 12px}
-  .bar{display:flex;gap:8px;align-items:center;justify-content:space-between}
-  .title{font-weight:700;letter-spacing:.4px}
-  .hud{display:flex;gap:8px;flex-wrap:wrap}
-  .pill{background:#12151b;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:.95rem}
-  main{padding:14px;max-width:880px;margin:0 auto}
-  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  .actions{display:flex;gap:8px;flex-wrap:wrap}
-  button{background:#1c222d;border:1px solid var(--line);color:var(--fg);padding:8px 12px;border-radius:10px;cursor:pointer}
-  button:hover{border-color:#2c3240}
-  button:disabled{opacity:.55;cursor:not-allowed}
-  .ghost{background:transparent}
-  .primary{background:var(--accent);color:#001018;border:none}
-  .danger{background:var(--danger);border:none}
-  .warn{background:var(--warn);color:#181a1f;border:none}
-  .ok{background:var(--ok);border:none}
-  .grid{display:grid;gap:14px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
-  .exercise-head{display:flex;gap:10px;align-items:center;justify-content:space-between}
-  .exercise-title{font-weight:700}
-  .badge{font-size:.78rem;color:var(--muted)}
-  .series{display:grid;gap:10px;margin-top:10px}
-  .serie{border:1px dashed #2a2f3b;border-radius:12px;padding:10px}
-  .serie.editable{background:#141923}
-  .serie.live{background:#06240f;border-color:#1f7a4a}
-  .serie.done{background:#0d211a;border-color:#1f7a4a}
-  .serie-header{display:flex;align-items:center;justify-content:space-between}
-  .chips{display:flex;gap:8px;flex-wrap:wrap}
-  .chip{border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:.9rem;color:var(--muted)}
-  .num{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  .num input{width:64px;background:#0f1218;color:var(--fg);border:0;padding:8px;text-align:center}
-  .num button{border:0;background:#0f1218;width:36px}
-  .yellow{background:var(--warn);color:#181a1f}
-  .rest-card{position:sticky;top:56px;z-index:19;margin-top:8px;border:0;border-radius:12px;padding:10px}
-  .rest-card.hide{display:none}
-  .muted{color:var(--muted)}
-  .sep{height:1px;background:var(--line);margin:12px 0}
-  footer{height:42px}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <meta name="description" content="SuperLuis.app - Rutinas, descanso, control por voz y seguimiento de tu progreso." />
+
+  <title>SuperLuis.app</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <!-- Estilos principales (modo oscuro) -->
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background-color: #111;
+      color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: #1a1a1a;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border-bottom: 1px solid #333;
+    }
+    nav {
+      display: flex;
+      justify-content: space-around;
+      background: #1a1a1a;
+      padding: 0.5rem;
+      border-bottom: 1px solid #333;
+    }
+    nav button {
+      background: none;
+      border: none;
+      color: #f5f5f5;
+      font-size: 1rem;
+      padding: 0.5rem;
+      cursor: pointer;
+    }
+    nav button:hover {
+      color: #007bff;
+    }
+    main {
+      flex: 1;
+      padding: 1.5rem;
+    }
+    footer {
+      background: #1a1a1a;
+      text-align: center;
+      padding: 1rem;
+      border-top: 1px solid #333;
+      font-size: 0.9rem;
+    }
+    .card {
+      background: #1e1e1e;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+    .btn {
+      display: inline-block;
+      background: #007bff;
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      margin: 0.25rem;
+      transition: background 0.3s;
+    }
+    .btn:hover { background: #0056b3; }
+    .btn-red { background: #dc3545; }
+    .btn-green { background: #28a745; }
+    .btn-yellow { background: #ffc107; color:#111; }
+    .btn-gray { background: #6c757d; }
+    .controls { margin-top: 1rem; }
+    #timer {
+      font-size: 2rem;
+      text-align: center;
+      margin: 1rem 0;
+    }
+  </style>
 </head>
 <body>
+  <header>💪 SuperLuis.app</header>
 
-<header>
-  <div class="bar">
-    <div class="title">🏋️‍♂️ SuperLuis – Rutina de hoy</div>
-    <div class="hud">
-      <div id="hudState" class="pill">Estado: <b>Listo</b></div>
-      <div id="hudTimer" class="pill">Tiempo: <b>00:00</b></div>
-      <div id="hudReps" class="pill">Reps: <b>0/0</b></div>
-      <div id="autoNextWrap" class="pill">
-        <label><input type="checkbox" id="autoNext" checked> Auto-siguiente</label>
+  <nav>
+    <button onclick="showTab('rutinas')">Rutinas</button>
+    <button onclick="showTab('descanso')">Descanso</button>
+    <button onclick="showTab('voz')">Voces</button>
+    <button onclick="showTab('ajustes')">Ajustes</button>
+  </nav>
+
+  <main id="content">
+    <!-- Sección Rutinas -->
+    <section id="rutinas" class="tab card">
+      <h2>Rutina de Hoy</h2>
+      <ul id="routine-list">
+        <li>🏋️‍♂️ Sentadillas - 3x12</li>
+        <li>🏋️‍♂️ Press banca - 3x10</li>
+        <li>🏋️‍♂️ Remo con barra - 3x12</li>
+        <li>🏋️‍♂️ Planchas - 3x45s</li>
+      </ul>
+      <div class="controls">
+        <button class="btn btn-green">▶️ Reanudar</button>
+        <button class="btn btn-yellow">⏸️ Pausa</button>
+        <button class="btn btn-red">⏭️ Saltar</button>
       </div>
-    </div>
-  </div>
-  <div id="restBanner" class="rest-card yellow hide">
-    ⏱️ Descanso: <b id="restLeft">0</b> s
-    <span class="muted"> · Pausa / Saltar disponibles</span>
-  </div>
-</header>
+    </section>
 
-<main>
-  <div class="row actions">
-    <button id="btnReset" class="ghost">↺ Reset día</button>
-    <button id="btnGuardar" class="ok">💾 Guardar</button>
-  </div>
-
-  <div id="exercises" class="grid"></div>
-</main>
-<footer></footer>
-
-<script>
-/* ------------------ Utilidades ------------------ */
-const $ = s => document.querySelector(s);
-const $$ = s => document.querySelectorAll(s);
-const fmt = n => String(n).padStart(2,'0');
-const beep = (hz=880,ms=120,gain=0.06) => {
-  const ac = new (window.AudioContext||window.webkitAudioContext)();
-  const o = ac.createOscillator(); const g = ac.createGain();
-  o.type='square'; o.frequency.value=hz; g.gain.value=gain;
-  o.connect(g).connect(ac.destination); o.start();
-  setTimeout(()=>{o.stop();ac.close()}, ms);
-};
-const speakQueue = (()=>{ // cola para evitar solapes
-  let speaking=false, q=[];
-  const next=()=>{ if(speaking||q.length===0) return;
-    speaking=true; const {text, onend} = q.shift();
-    const u=new SpeechSynthesisUtterance(text);
-    u.lang='es-ES'; u.rate=1.02; u.pitch=1.0;
-    u.onend=()=>{ speaking=false; onend&&onend(); next(); };
-    speechSynthesis.speak(u);
-  };
-  return (text,onend)=>{ q.push({text,onend}); next(); };
-})();
-const persist = {
-  key:'sl_routine_v1',
-  save(data){ localStorage.setItem(this.key, JSON.stringify(data)); },
-  load(){ try{ return JSON.parse(localStorage.getItem(this.key)) }catch(e){ return null } }
-};
-
-/* ------------------ Datos demo (editable) ------------------ */
-const defaultPlan = [
-  {
-    id:'ex1',
-    nombre:'Seated Chest Press',
-    maquina:'L070',
-    descanso:60,
-    series:[
-      {targetReps:10, reps:10, peso:57, done:false},
-      {targetReps:10, reps:10, peso:57, done:false},
-      {targetReps:10, reps:10, peso:57, done:false}
-    ]
-  },
-  {
-    id:'ex2',
-    nombre:'Lat Pully Convergent',
-    maquina:'Convergent 72.5',
-    descanso:75,
-    series:[
-      {targetReps:5, reps:5, peso:72.5, done:false},
-      {targetReps:5, reps:5, peso:72.5, done:false},
-      {targetReps:5, reps:5, peso:72.5, done:false}
-    ]
-  },
-  {
-    id:'ex3',
-    nombre:'Seated Row',
-    maquina:'L090',
-    descanso:60,
-    series:[
-      {targetReps:6, reps:6, peso:70, done:false},
-      {targetReps:6, reps:6, peso:70, done:false}
-    ]
-  }
-];
-
-let state = persist.load() || {
-  autoNext:true,
-  current:{ ex:0, serie:0, mode:'idle' }, // idle | reps | rest
-  plan: defaultPlan
-};
-
-$('#autoNext').checked = !!state.autoNext;
-$('#autoNext').addEventListener('change', e=>{
-  state.autoNext = e.target.checked;
-  persist.save(state);
-});
-
-/* ------------------ Render ------------------ */
-function render(){
-  const wrap = $('#exercises'); wrap.innerHTML='';
-  state.plan.forEach((ex, ei)=>{
-    const card = document.createElement('div'); card.className='card';
-    // encabezado
-    const head = document.createElement('div'); head.className='exercise-head';
-    head.innerHTML = `
-      <div>
-        <div class="exercise-title">${ex.nombre}</div>
-        <div class="badge">Máquina: ${ex.maquina} · Descanso <b>${ex.descanso}</b> s</div>
+    <!-- Sección Descanso -->
+    <section id="descanso" class="tab card" style="display:none">
+      <h2>Tiempo de Descanso</h2>
+      <p id="timer">00:30</p>
+      <div class="controls">
+        <button class="btn btn-green" onclick="startTimer()">▶️ Reanudar</button>
+        <button class="btn btn-yellow" onclick="pauseTimer()">⏸️ Pausar</button>
+        <button class="btn btn-red" onclick="skipTimer()">⏭️ Saltar</button>
       </div>
-      <div class="actions">
-        <button class="primary" data-action="start-ex" data-e="${ei}">▶ Empezar ejercicio</button>
-        <button class="ghost" data-action="add-serie" data-e="${ei}">＋ Serie</button>
-        <button class="ghost" data-action="rest-edit" data-e="${ei}">⚙️ Descanso</button>
+    </section>
+
+    <!-- Sección Voces -->
+    <section id="voz" class="tab card" style="display:none">
+      <h2>Control por Voz</h2>
+      <p>Activa las voces para guiar tus entrenamientos.</p>
+      <div class="controls">
+        <button class="btn btn-green" onclick="speak('¡Vamos! Tu entrenamiento comienza ahora.')">🎤 Activar</button>
+        <button class="btn btn-gray" onclick="stopSpeaking()">🔇 Desactivar</button>
+        <button class="btn btn-yellow">⚙️ Configurar</button>
       </div>
-    `;
-    card.appendChild(head);
+    </section>
 
-    // series
-    const list = document.createElement('div'); list.className='series';
-    ex.series.forEach((s, si)=>{
-      const isLive = state.current.mode!=='idle' && state.current.ex===ei && state.current.serie===si;
-      const div = document.createElement('div');
-      div.className = 'serie ' + (isLive ? 'live' : (s.done ? 'done' : 'editable'));
-      // mostrar solo la serie en curso si el ejercicio está en marcha; si está idle mostrar todas
-      const shouldHide = (state.current.mode!=='idle' && state.current.ex===ei && si!==state.current.serie);
-      if(shouldHide) div.style.display='none';
+    <!-- Sección Ajustes -->
+    <section id="ajustes" class="tab card" style="display:none">
+      <h2>Ajustes</h2>
+      <button class="btn btn-gray" onclick="editRoutine()">✏️ Editar Rutinas</button>
+      <button class="btn btn-gray" onclick="importRoutine()">📥 Importar</button>
+      <button class="btn btn-gray" onclick="exportRoutine()">📤 Exportar</button>
+      <input type="file" id="fileInput" accept="application/json" style="display:none" />
+    </section>
+  </main>
 
-      div.innerHTML = `
-        <div class="serie-header">
-          <div class="chips">
-            <div class="chip">Serie <b>${si+1}</b></div>
-            <div class="chip">Objetivo: ${s.targetReps} rep</div>
-            <div class="chip">Estado: ${s.done?'✅ Completada': (isLive?'⏳ En curso':'Pendiente')}</div>
-          </div>
-          <div class="actions">
-            ${!isLive && !s.done ? `<button data-action="start-serie" data-e="${ei}" data-s="${si}" class="ok">▶ Iniciar serie</button>`:''}
-            ${!isLive && !s.done ? `<button data-action="del-serie" data-e="${ei}" data-s="${si}" class="danger">🗑️</button>`:''}
-          </div>
-        </div>
+  <footer>© 2025 SuperLuis</footer>
 
-        <div class="row" style="margin-top:8px">
-          <div>
-            <div class="muted" style="font-size:.85rem;margin-bottom:4px">Peso (kg)</div>
-            <div class="num">
-              <button data-action="peso-dec" data-e="${ei}" data-s="${si}">−</button>
-              <input data-field="peso" value="${Number(s.peso).toFixed(1)}" ${isLive?'disabled':''}>
-              <button data-action="peso-inc" data-e="${ei}" data-s="${si}">+</button>
-            </div>
-          </div>
-          <div>
-            <div class="muted" style="font-size:.85rem;margin-bottom:4px">Reps</div>
-            <div class="num">
-              <button data-action="reps-dec" data-e="${ei}" data-s="${si}">−</button>
-              <input data-field="reps" value="${s.reps}" ${isLive?'disabled':''}>
-              <button data-action="reps-inc" data-e="${ei}" data-s="${si}">+</button>
-            </div>
-          </div>
-          <div class="muted">Previsto: ${s.targetReps} rep</div>
-        </div>
+  <!-- Scripts -->
+  <script>
+    // -------- Tabs --------
+    function showTab(tabId) {
+      document.querySelectorAll('.tab').forEach(tab => tab.style.display = 'none');
+      document.getElementById(tabId).style.display = 'block';
+    }
 
-        ${isLive ? `
-        <div class="sep"></div>
-        <div class="actions">
-          <button data-action="mark-done" data-e="${ei}" data-s="${si}" class="ok">✔ Terminar serie</button>
-        </div>`:''}
-      `;
-      list.appendChild(div);
-    });
-    card.appendChild(list);
-    wrap.appendChild(card);
-  });
+    // -------- Temporizador --------
+    let timerInterval;
+    let remaining = 30; // segundos
+    let isRunning = false;
 
-  // HUD
-  $('#hudState').innerHTML = `Estado: <b>${state.current.mode==='idle'?'Listo': (state.current.mode==='reps'?'Serie en curso':'Descanso')}</b>`;
-  persist.save(state);
-}
-render();
+    function updateTimerDisplay() {
+      const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
+      const seconds = String(remaining % 60).padStart(2, '0');
+      document.getElementById("timer").textContent = `${minutes}:${seconds}`;
+    }
 
-/* ------------------ Lógica Series / Descanso ------------------ */
-let repTimer=null, restTimer=null, repCount=0, repTarget=0, restLeft=0;
-function clearAllTimers(){ if(repTimer){clearInterval(repTimer);repTimer=null} if(restTimer){clearInterval(restTimer);restTimer=null} }
+    function startTimer() {
+      if (isRunning) return;
+      isRunning = true;
+      timerInterval = setInterval(() => {
+        if (remaining > 0) {
+          remaining--;
+          updateTimerDisplay();
+        } else {
+          clearInterval(timerInterval);
+          isRunning = false;
+          speak("¡Descanso terminado! A seguir entrenando.");
+        }
+      }, 1000);
+    }
+    function pauseTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+    }
+    function skipTimer() {
+      clearInterval(timerInterval);
+      remaining = 0;
+      updateTimerDisplay();
+      isRunning = false;
+      speak("Descanso saltado, continuamos.");
+    }
+    updateTimerDisplay();
 
-function startExercise(ei){
-  // abre ejercicio y arranca primera serie como pediste
-  if(state.plan[ei].series.every(s=>s.done)) return;
-  const si = state.plan[ei].series.findIndex(s=>!s.done);
-  startSerie(ei, Math.max(0, si));
-}
-
-function startSerie(ei, si){
-  clearAllTimers();
-  const ex = state.plan[ei]; const s = ex.series[si];
-  // bloquear edición
-  state.current = {ex:ei, serie:si, mode:'reps'};
-  repTarget = s.reps; repCount=0;
-  $('#hudReps').innerHTML = `Reps: <b>0/${repTarget}</b>`;
-  $('#restBanner').classList.add('hide');
-  render();
-
-  // Voz de inicio
-  speakQueue(`Empezamos serie ${si+1}. ${repTarget} repeticiones.`, ()=>{
-    // contar repeticiones con voz y cadencia 1.2s aprox
-    repTimer = setInterval(()=>{
-      if(repCount>=repTarget){ clearInterval(repTimer); repTimer=null; endSerie(ei, si); return;}
-      repCount++;
-      $('#hudReps').innerHTML = `Reps: <b>${repCount}/${repTarget}</b>`;
-      // voz “Arriba / Abajo” + número
-      speakQueue(`${repCount}. Arriba... Abajo...`);
-    }, 1200);
-  });
-}
-
-function endSerie(ei, si){
-  // marcar hecha
-  state.plan[ei].series[si].done = true;
-  render();
-  // iniciar descanso sincronizado
-  startRest(ei, si);
-}
-
-let paused=false, pausedAt=0;
-function startRest(ei, si){
-  const ex = state.plan[ei];
-  restLeft = ex.descanso;
-  state.current.mode='rest';
-  $('#restBanner').classList.remove('hide');
-  $('#hudTimer').innerHTML = `Tiempo: <b>${fmt(Math.floor(restLeft/60))}:${fmt(restLeft%60)}</b>`;
-  $('#restLeft').textContent = restLeft;
-  render();
-  speakQueue(`Iniciamos descanso de ${restLeft} segundos.`);
-
-  clearInterval(restTimer);
-  restTimer = setInterval(()=>{
-    if(paused) return;
-    restLeft--;
-    $('#restLeft').textContent = restLeft;
-    $('#hudTimer').innerHTML = `Tiempo: <b>${fmt(Math.floor(restLeft/60))}:${fmt(restLeft%60)}</b>`;
-
-    // Avisos 30/20/10 y bips
-    if([30,20,10].includes(restLeft)){ speakQueue(`${restLeft} segundos`); beep(700,100); }
-    // 3,2,1 con bips distintos
-    if(restLeft===3){ beep(700,120) }
-    if(restLeft===2){ beep(900,130) }
-    if(restLeft===1){ beep(1200,200,0.08) }
-
-    if(restLeft<=0){
-      clearInterval(restTimer); restTimer=null;
-      $('#restBanner').classList.add('hide');
-      // siguiente serie automática dentro del MISMO ejercicio
-      const next = ex.series.findIndex(s=>!s.done);
-      if(next>=0){
-        if(state.autoNext){ startSerie(ei, next); }
-        else{ state.current.mode='idle'; render(); }
-      }else{
-        // ejercicio completado -> idle y tarjeta queda en verde (done)
-        state.current.mode='idle'; render();
+    // -------- Voz --------
+    let utterance;
+    function speak(text) {
+      stopSpeaking();
+      utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "es-ES";
+      speechSynthesis.speak(utterance);
+    }
+    function stopSpeaking() {
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
       }
     }
-  },1000);
-}
 
-/* ------------------ Eventos globales ------------------ */
-document.addEventListener('click', e=>{
-  const el = e.target.closest('button'); if(!el) return;
-  const a = el.dataset.action;
-  if(a==='start-ex'){ startExercise(+el.dataset.e); return; }
-  if(a==='start-serie'){ startSerie(+el.dataset.e, +el.dataset.s); return; }
-  if(a==='del-serie'){
-    const ei=+el.dataset.e, si=+el.dataset.s; 
-    if(state.plan[ei].series[si].done) return;
-    state.plan[ei].series.splice(si,1);
-    // re-render
-    render(); return;
-  }
-  if(a==='peso-inc'||a==='peso-dec'||a==='reps-inc'||a==='reps-dec'){
-    const ei=+el.dataset.e, si=+el.dataset.s; const s=state.plan[ei].series[si];
-    if(state.current.mode==='reps' && state.current.ex===ei && state.current.serie===si) return;
-    if(a==='peso-inc') s.peso = +(s.peso+0.5).toFixed(1);
-    if(a==='peso-dec') s.peso = +(Math.max(0, s.peso-0.5)).toFixed(1);
-    if(a==='reps-inc') s.reps = Math.min(120, s.reps+1);
-    if(a==='reps-dec') s.reps = Math.max(1, s.reps-1);
-    render(); return;
-  }
-  if(a==='rest-edit'){
-    const ei=+el.dataset.e; const val = prompt('Segundos de descanso para este ejercicio:', state.plan[ei].descanso);
-    if(!val) return; const n = Math.max(10, parseInt(val,10)||60);
-    state.plan[ei].descanso = n; render(); return;
-  }
-  if(a==='mark-done'){
-    const ei=+el.dataset.e, si=+el.dataset.s;
-    if(state.current.mode!=='reps') return;
-    clearAllTimers();
-    endSerie(ei, si);
-    return;
-  }
-});
+    // -------- Rutinas (import/export) --------
+    let routine = [
+      "🏋️‍♂️ Sentadillas - 3x12",
+      "🏋️‍♂️ Press banca - 3x10",
+      "🏋️‍♂️ Remo con barra - 3x12",
+      "🏋️‍♂️ Planchas - 3x45s"
+    ];
 
-document.addEventListener('input', e=>{
-  const inp = e.target;
-  if(inp.matches('[data-field="peso"],[data-field="reps"]')){
-    const card = inp.closest('.serie'); const ei = [...$('#exercises').children].indexOf(inp.closest('.card'));
-    // localizar serie por índice visual
-    const nodes=[...inp.closest('.series').children];
-    const si=nodes.indexOf(inp.closest('.serie'));
-    const s=state.plan[ei].series[si];
-    if(inp.dataset.field==='peso'){
-      let v=parseFloat(inp.value.replace(',','.')); if(isNaN(v)) v=s.peso;
-      s.peso=+v.toFixed(1);
-    }else{
-      let v=parseInt(inp.value,10); if(isNaN(v)) v=s.reps;
-      s.reps=Math.max(1, Math.min(120, v));
+    function renderRoutine() {
+      const ul = document.getElementById("routine-list");
+      ul.innerHTML = "";
+      routine.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        ul.appendChild(li);
+      });
     }
-    persist.save(state);
-  }
-});
 
-/* Botones superiores */
-$('#btnGuardar').addEventListener('click', ()=>{
-  persist.save(state); beep(1000,150,0.07);
-});
+    function editRoutine() {
+      const nuevo = prompt("Escribe la rutina separada por comas:", routine.join(", "));
+      if (nuevo) {
+        routine = nuevo.split(",").map(r => r.trim());
+        renderRoutine();
+      }
+    }
 
-$('#btnReset').addEventListener('click', ()=>{
-  if(!confirm('¿Reiniciar el día? Se borrarán series completadas.')) return;
-  clearAllTimers();
-  state = { autoNext: $('#autoNext').checked, current:{ex:0,serie:0,mode:'idle'}, plan: JSON.parse(JSON.stringify(defaultPlan)) };
-  $('#restBanner').classList.add('hide');
-  render();
-});
+    function exportRoutine() {
+      const blob = new Blob([JSON.stringify(routine, null, 2)], {type: "application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "rutina.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
 
-/* ------------------ Controles de descanso (pausa/saltar) ------------------ */
-// Creamos controles flotantes dentro del banner
-(function mountRestControls(){
-  const b = document.createElement('div'); b.style.marginTop='6px';
-  b.innerHTML = `
-    <div class="actions">
-      <button id="btnRestPause" class="ghost">⏸️ Pausa</button>
-      <button id="btnRestResume" class="ghost" disabled>▶ Reanudar</button>
-      <button id="btnRestSkip" class="warn">⏩ Saltar descanso</button>
-    </div>
-  `;
-  $('#restBanner').appendChild(b);
+    function importRoutine() {
+      document.getElementById("fileInput").click();
+    }
 
-  $('#btnRestPause').onclick = ()=>{
-    if(state.current.mode!=='rest') return;
-    paused=true; pausedAt = restLeft;
-    $('#btnRestPause').disabled=true;
-    $('#btnRestResume').disabled=false;
-  };
-  $('#btnRestResume').onclick = ()=>{
-    if(state.current.mode!=='rest') return;
-    // al reanudar, si restLeft < 10, subimos a 10
-    if(restLeft<10) restLeft=10;
-    paused=false;
-    $('#btnRestPause').disabled=false;
-    $('#btnRestResume').disabled=true;
-  };
-  $('#btnRestSkip').onclick = ()=>{
-    if(state.current.mode!=='rest') return;
-    // saltar descanso -> directamente a la siguiente serie del MISMO ejercicio
-    const {ex, serie} = state.current;
-    clearInterval(restTimer); restTimer=null;
-    $('#restBanner').classList.add('hide');
-    const currEx = state.plan[ex];
-    const next = currEx.series.findIndex(s=>!s.done);
-    if(next>=0){ startSerie(ex, next); }
-    else{ state.current.mode='idle'; render(); }
-  };
-})();
+    document.getElementById("fileInput").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          routine = JSON.parse(reader.result);
+          renderRoutine();
+          alert("Rutina importada con éxito ✅");
+        } catch (err) {
+          alert("Error al importar rutina ❌");
+        }
+      };
+      reader.readAsText(file);
+    });
 
-/* ------------------ Cargar estado al abrir ------------------ */
-window.addEventListener('load', ()=>{
-  // restaurar autoNext pill
-  $('#autoNext').checked = state.autoNext;
-  render();
-});
-</script>
+    renderRoutine();
+
+    // -------- Service Worker (PWA) --------
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/service-worker.js")
+          .then(reg => console.log("Service Worker registrado:", reg))
+          .catch(err => console.error("Error al registrar SW:", err));
+      });
+    }
+  </script>
 </body>
 </html>
