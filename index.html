@@ -3,58 +3,57 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>SuperLuis.app – Rutina diaria (v4.20)</title>
+<title>SuperLuis.app – Rutina diaria</title>
 <style>
   :root{
-    --bg:#0f1116;--card:#171a20;--line:#232733;--fg:#e9edf2;--muted:#9aa2ad;
-    --accent:#58d0ff;--ok:#1f9d55;--warn:#ffd54a;--danger:#ff4d4f;
+    --bg:#0e0f12;--card:#171a20;--muted:#8a9099;--fg:#e9edf2;--accent:#5dd0ff;
+    --ok:#1f9d55;--warn:#ffcc00;--danger:#ff4d4f;--line:#232733;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif}
-  header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#0f1116 0%,rgba(15,17,22,.92) 100%);border-bottom:1px solid var(--line);padding:10px 12px}
-  .bar{display:flex;gap:10px;align-items:center;justify-content:space-between}
-  .title{font-weight:800;letter-spacing:.3px}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif}
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0e0f12 0%,rgba(14,15,18,.92) 100%);
+    border-bottom:1px solid var(--line);padding:10px 12px}
+  .bar{display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .title{font-weight:700;letter-spacing:.4px}
   .hud{display:flex;gap:8px;flex-wrap:wrap}
-  .pill{background:#12151a;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:.95rem}
+  .pill{background:#12151b;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:.95rem}
   main{padding:14px;max-width:880px;margin:0 auto}
   .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
   .actions{display:flex;gap:8px;flex-wrap:wrap}
-  button{background:#1b2230;border:1px solid var(--line);color:var(--fg);padding:9px 12px;border-radius:10px;cursor:pointer}
-  button:hover{border-color:#2d3546}
+  button{background:#1c222d;border:1px solid var(--line);color:var(--fg);padding:8px 12px;border-radius:10px;cursor:pointer}
+  button:hover{border-color:#2c3240}
   button:disabled{opacity:.55;cursor:not-allowed}
   .ghost{background:transparent}
-  .primary{background:var(--accent);border:none;color:#001018}
-  .ok{background:var(--ok);border:none}
-  .warn{background:#ffb300;color:#121212;border:none}
+  .primary{background:var(--accent);color:#001018;border:none}
   .danger{background:var(--danger);border:none}
+  .warn{background:var(--warn);color:#181a1f;border:none}
+  .ok{background:var(--ok);border:none}
   .grid{display:grid;gap:14px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
   .exercise-head{display:flex;gap:10px;align-items:center;justify-content:space-between}
-  .exercise-title{font-weight:750}
-  .badge{font-size:.85rem;color:var(--muted)}
+  .exercise-title{font-weight:700}
+  .badge{font-size:.78rem;color:var(--muted)}
   .series{display:grid;gap:10px;margin-top:10px}
-  .serie{border:1px dashed #2a2f3b;border-radius:12px;padding:10px;background:#141922}
-  .serie.editable{background:#141922}
-  .serie.live{background:#0f2d18;border-color:#1f7a4a}
-  .serie.done{background:#0e2019;border-color:#1f7a4a}
+  .serie{border:1px dashed #2a2f3b;border-radius:12px;padding:10px}
+  .serie.editable{background:#141923}
+  .serie.live{background:#06240f;border-color:#1f7a4a}
+  .serie.done{background:#0d211a;border-color:#1f7a4a}
   .serie-header{display:flex;align-items:center;justify-content:space-between}
   .chips{display:flex;gap:8px;flex-wrap:wrap}
-  .chip{border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:.9rem;color:var(--muted);background:#10141b}
+  .chip{border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:.9rem;color:var(--muted)}
   .num{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  .num input{width:64px;background:#0f131a;color:var(--fg);border:0;padding:8px;text-align:center}
-  .num button{border:0;background:#0f131a;width:36px}
-  /* Banner descanso con alto contraste */
-  .rest-card{position:sticky;top:56px;z-index:29;margin-top:8px;border:2px solid #111;border-radius:12px;padding:12px;background:var(--warn);color:#111;font-weight:700}
-  .rest-card .muted{color:#222}
-  .rest-card .actions button{background:#fff;border:2px solid #111;color:#111}
-  .rest-card .actions button.warn{background:#ffe082}
-  .hide{display:none}
+  .num input{width:64px;background:#0f1218;color:var(--fg);border:0;padding:8px;text-align:center}
+  .num button{border:0;background:#0f1218;width:36px}
+  .yellow{background:var(--warn);color:#181a1f}
+  .rest-card{position:sticky;top:56px;z-index:19;margin-top:8px;border:0;border-radius:12px;padding:10px}
+  .rest-card.hide{display:none}
   .muted{color:var(--muted)}
   .sep{height:1px;background:var(--line);margin:12px 0}
   footer{height:42px}
 </style>
 </head>
 <body>
+
 <header>
   <div class="bar">
     <div class="title">🏋️‍♂️ SuperLuis – Rutina de hoy</div>
@@ -62,16 +61,14 @@
       <div id="hudState" class="pill">Estado: <b>Listo</b></div>
       <div id="hudTimer" class="pill">Tiempo: <b>00:00</b></div>
       <div id="hudReps" class="pill">Reps: <b>0/0</b></div>
-      <div class="pill"><label><input type="checkbox" id="autoNext" checked> Auto-siguiente</label></div>
+      <div id="autoNextWrap" class="pill">
+        <label><input type="checkbox" id="autoNext" checked> Auto-siguiente</label>
+      </div>
     </div>
   </div>
-  <div id="restBanner" class="rest-card hide">
-    ⏱️ Descanso: <b id="restLeft">0</b> s <span class="muted"> · opciones abajo</span>
-    <div style="margin-top:8px" class="actions rest-actions">
-      <button id="btnRestPause">⏸️ Pausa</button>
-      <button id="btnRestResume" disabled>▶ Reanudar</button>
-      <button id="btnRestSkip" class="warn">⏩ Saltar descanso</button>
-    </div>
+  <div id="restBanner" class="rest-card yellow hide">
+    ⏱️ Descanso: <b id="restLeft">0</b> s
+    <span class="muted"> · Pausa / Saltar disponibles</span>
   </div>
 </header>
 
@@ -80,93 +77,128 @@
     <button id="btnReset" class="ghost">↺ Reset día</button>
     <button id="btnGuardar" class="ok">💾 Guardar</button>
   </div>
+
   <div id="exercises" class="grid"></div>
 </main>
 <footer></footer>
 
 <script>
-/* ========== Utilidades ========== */
-const $=s=>document.querySelector(s);
-const fmt=n=>String(n).padStart(2,'0');
-const now=()=>performance.now();
-const speak=(txt)=>new Promise(res=>{
-  const u=new SpeechSynthesisUtterance(txt);
-  u.lang='es-ES';u.rate=1.02;u.pitch=1.0;u.onend=res; speechSynthesis.speak(u);
-});
-const beep=(hz=880,ms=120,gain=0.06)=>{
-  const ac=new (window.AudioContext||window.webkitAudioContext)();
-  const o=ac.createOscillator(), g=ac.createGain();
-  o.type='square';o.frequency.value=hz;g.gain.value=gain;
-  o.connect(g).connect(ac.destination);o.start();setTimeout(()=>{o.stop();ac.close()},ms);
+/* ------------------ Utilidades ------------------ */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const fmt = n => String(n).padStart(2,'0');
+const beep = (hz=880,ms=120,gain=0.06) => {
+  const ac = new (window.AudioContext||window.webkitAudioContext)();
+  const o = ac.createOscillator(); const g = ac.createGain();
+  o.type='square'; o.frequency.value=hz; g.gain.value=gain;
+  o.connect(g).connect(ac.destination); o.start();
+  setTimeout(()=>{o.stop();ac.close()}, ms);
 };
-const storeKey='sl_v420';
-const save=(obj)=>localStorage.setItem(storeKey,JSON.stringify(obj));
-const load=()=>{try{return JSON.parse(localStorage.getItem(storeKey))}catch{ return null }};
+const speakQueue = (()=>{ // cola para evitar solapes
+  let speaking=false, q=[];
+  const next=()=>{ if(speaking||q.length===0) return;
+    speaking=true; const {text, onend} = q.shift();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='es-ES'; u.rate=1.02; u.pitch=1.0;
+    u.onend=()=>{ speaking=false; onend&&onend(); next(); };
+    speechSynthesis.speak(u);
+  };
+  return (text,onend)=>{ q.push({text,onend}); next(); };
+})();
+const persist = {
+  key:'sl_routine_v1',
+  save(data){ localStorage.setItem(this.key, JSON.stringify(data)); },
+  load(){ try{ return JSON.parse(localStorage.getItem(this.key)) }catch(e){ return null } }
+};
 
-/* ========== Datos base (demo) ========== */
-const planBase=[
-  {id:'ex1',nombre:'Seated Chest Press',maquina:'L070',descanso:60,series:[
-    {targetReps:10,reps:10,peso:57,done:false},
-    {targetReps:10,reps:10,peso:57,done:false},
-    {targetReps:10,reps:10,peso:57,done:false}
-  ]},
-  {id:'ex2',nombre:'Lat Pully Convergent',maquina:'Convergent 72.5',descanso:75,series:[
-    {targetReps:5,reps:5,peso:72.5,done:false},
-    {targetReps:5,reps:5,peso:72.5,done:false},
-    {targetReps:5,reps:5,peso:72.5,done:false}
-  ]},
-  {id:'ex3',nombre:'Seated Row',maquina:'L090',descanso:60,series:[
-    {targetReps:6,reps:6,peso:70,done:false},
-    {targetReps:6,reps:6,peso:70,done:false}
-  ]}
+/* ------------------ Datos demo (editable) ------------------ */
+const defaultPlan = [
+  {
+    id:'ex1',
+    nombre:'Seated Chest Press',
+    maquina:'L070',
+    descanso:60,
+    series:[
+      {targetReps:10, reps:10, peso:57, done:false},
+      {targetReps:10, reps:10, peso:57, done:false},
+      {targetReps:10, reps:10, peso:57, done:false}
+    ]
+  },
+  {
+    id:'ex2',
+    nombre:'Lat Pully Convergent',
+    maquina:'Convergent 72.5',
+    descanso:75,
+    series:[
+      {targetReps:5, reps:5, peso:72.5, done:false},
+      {targetReps:5, reps:5, peso:72.5, done:false},
+      {targetReps:5, reps:5, peso:72.5, done:false}
+    ]
+  },
+  {
+    id:'ex3',
+    nombre:'Seated Row',
+    maquina:'L090',
+    descanso:60,
+    series:[
+      {targetReps:6, reps:6, peso:70, done:false},
+      {targetReps:6, reps:6, peso:70, done:false}
+    ]
+  }
 ];
 
-let state=load()||{
+let state = persist.load() || {
   autoNext:true,
-  current:{phase:'idle',ex:0,serie:0,endTime:0,lastSecond:null}, // phase: idle|reps|rest
-  plan:planBase
+  current:{ ex:0, serie:0, mode:'idle' }, // idle | reps | rest
+  plan: defaultPlan
 };
-$('#autoNext').checked=state.autoNext;
-$('#autoNext').onchange=e=>{state.autoNext=e.target.checked;save(state)};
 
-/* ========== Render ========== */
+$('#autoNext').checked = !!state.autoNext;
+$('#autoNext').addEventListener('change', e=>{
+  state.autoNext = e.target.checked;
+  persist.save(state);
+});
+
+/* ------------------ Render ------------------ */
 function render(){
-  const wrap=$('#exercises'); wrap.innerHTML='';
-  state.plan.forEach((ex,ei)=>{
-    const card=document.createElement('div'); card.className='card';
-    card.innerHTML=`
-      <div class="exercise-head">
-        <div>
-          <div class="exercise-title">${ex.nombre}</div>
-          <div class="badge">Máquina: ${ex.maquina} · Descanso <b>${ex.descanso}</b> s</div>
-        </div>
-        <div class="actions">
-          <button class="primary" data-act="start-ex" data-e="${ei}">▶ Empezar ejercicio</button>
-          <button class="ghost" data-act="add-serie" data-e="${ei}">＋ Serie</button>
-          <button class="ghost" data-act="rest-edit" data-e="${ei}">⚙️ Descanso</button>
-        </div>
+  const wrap = $('#exercises'); wrap.innerHTML='';
+  state.plan.forEach((ex, ei)=>{
+    const card = document.createElement('div'); card.className='card';
+    // encabezado
+    const head = document.createElement('div'); head.className='exercise-head';
+    head.innerHTML = `
+      <div>
+        <div class="exercise-title">${ex.nombre}</div>
+        <div class="badge">Máquina: ${ex.maquina} · Descanso <b>${ex.descanso}</b> s</div>
       </div>
-      <div class="series" id="series-${ei}"></div>
+      <div class="actions">
+        <button class="primary" data-action="start-ex" data-e="${ei}">▶ Empezar ejercicio</button>
+        <button class="ghost" data-action="add-serie" data-e="${ei}">＋ Serie</button>
+        <button class="ghost" data-action="rest-edit" data-e="${ei}">⚙️ Descanso</button>
+      </div>
     `;
-    const sWrap=card.querySelector('.series');
+    card.appendChild(head);
 
-    ex.series.forEach((s,si)=>{
-      const live = state.current.phase!=='idle' && state.current.ex===ei && state.current.serie===si;
-      const showOnlyLive = state.current.phase!=='idle' && state.current.ex===ei;
-      const div=document.createElement('div');
-      div.className='serie '+(s.done?'done':(live?'live':'editable'));
-      if(showOnlyLive && !live) div.style.display='none';
+    // series
+    const list = document.createElement('div'); list.className='series';
+    ex.series.forEach((s, si)=>{
+      const isLive = state.current.mode!=='idle' && state.current.ex===ei && state.current.serie===si;
+      const div = document.createElement('div');
+      div.className = 'serie ' + (isLive ? 'live' : (s.done ? 'done' : 'editable'));
+      // mostrar solo la serie en curso si el ejercicio está en marcha; si está idle mostrar todas
+      const shouldHide = (state.current.mode!=='idle' && state.current.ex===ei && si!==state.current.serie);
+      if(shouldHide) div.style.display='none';
 
-      div.innerHTML=`
+      div.innerHTML = `
         <div class="serie-header">
           <div class="chips">
             <div class="chip">Serie <b>${si+1}</b></div>
             <div class="chip">Objetivo: ${s.targetReps} rep</div>
-            <div class="chip">Estado: ${s.done?'✅ Completada':(live?'⏳ En curso':'Pendiente')}</div>
+            <div class="chip">Estado: ${s.done?'✅ Completada': (isLive?'⏳ En curso':'Pendiente')}</div>
           </div>
           <div class="actions">
-            ${(!live && !s.done)?`<button data-act="start-serie" data-e="${ei}" data-s="${si}" class="ok">▶ Iniciar serie</button>`:''}
-            ${(!live && !s.done)?`<button data-act="del-serie" data-e="${ei}" data-s="${si}" class="danger">🗑️</button>`:''}
+            ${!isLive && !s.done ? `<button data-action="start-serie" data-e="${ei}" data-s="${si}" class="ok">▶ Iniciar serie</button>`:''}
+            ${!isLive && !s.done ? `<button data-action="del-serie" data-e="${ei}" data-s="${si}" class="danger">🗑️</button>`:''}
           </div>
         </div>
 
@@ -174,231 +206,237 @@ function render(){
           <div>
             <div class="muted" style="font-size:.85rem;margin-bottom:4px">Peso (kg)</div>
             <div class="num">
-              <button data-act="peso-dec" data-e="${ei}" data-s="${si}">−</button>
-              <input data-field="peso" value="${Number(s.peso).toFixed(1)}" ${live?'disabled':''}>
-              <button data-act="peso-inc" data-e="${ei}" data-s="${si}">+</button>
+              <button data-action="peso-dec" data-e="${ei}" data-s="${si}">−</button>
+              <input data-field="peso" value="${Number(s.peso).toFixed(1)}" ${isLive?'disabled':''}>
+              <button data-action="peso-inc" data-e="${ei}" data-s="${si}">+</button>
             </div>
           </div>
           <div>
             <div class="muted" style="font-size:.85rem;margin-bottom:4px">Reps</div>
             <div class="num">
-              <button data-act="reps-dec" data-e="${ei}" data-s="${si}">−</button>
-              <input data-field="reps" value="${s.reps}" ${live?'disabled':''}>
-              <button data-act="reps-inc" data-e="${ei}" data-s="${si}">+</button>
+              <button data-action="reps-dec" data-e="${ei}" data-s="${si}">−</button>
+              <input data-field="reps" value="${s.reps}" ${isLive?'disabled':''}>
+              <button data-action="reps-inc" data-e="${ei}" data-s="${si}">+</button>
             </div>
           </div>
           <div class="muted">Previsto: ${s.targetReps} rep</div>
         </div>
 
-        ${live?`<div class="sep"></div>
-          <div class="actions">
-            <button data-act="mark-done" data-e="${ei}" data-s="${si}" class="ok">✔ Terminar serie</button>
-          </div>`:''}
+        ${isLive ? `
+        <div class="sep"></div>
+        <div class="actions">
+          <button data-action="mark-done" data-e="${ei}" data-s="${si}" class="ok">✔ Terminar serie</button>
+        </div>`:''}
       `;
-      sWrap.appendChild(div);
+      list.appendChild(div);
     });
-
+    card.appendChild(list);
     wrap.appendChild(card);
   });
 
-  // HUD estado
-  $('#hudState').innerHTML=`Estado: <b>${
-    state.current.phase==='idle'?'Listo':(state.current.phase==='reps'?'Serie en curso':'Descanso')}</b>`;
-  save(state);
+  // HUD
+  $('#hudState').innerHTML = `Estado: <b>${state.current.mode==='idle'?'Listo': (state.current.mode==='reps'?'Serie en curso':'Descanso')}</b>`;
+  persist.save(state);
 }
 render();
 
-/* ========== Motor de fases con reloj maestro ========== */
-let rafId=null;
-const clock={
-  running:false,
-  lastBeepSec:null,
-  spokenSecSet:new Set(), // para 30/20/10 solo 1 vez
-  start(phase,durSec){
-    state.current.phase=phase;
-    state.current.endTime = now() + durSec*1000;
-    this.lastBeepSec=null; this.spokenSecSet.clear();
-    this.running=true;
-    loop();
-  },
-  stop(){ this.running=false; if(rafId) cancelAnimationFrame(rafId) }
-};
+/* ------------------ Lógica Series / Descanso ------------------ */
+let repTimer=null, restTimer=null, repCount=0, repTarget=0, restLeft=0;
+function clearAllTimers(){ if(repTimer){clearInterval(repTimer);repTimer=null} if(restTimer){clearInterval(restTimer);restTimer=null} }
 
-function loop(){
-  if(!clock.running){ return; }
-  const msLeft = Math.max(0, state.current.endTime - now());
-  const sLeft = Math.ceil(msLeft/1000);
-  // HUD timer siempre desde el mismo reloj
-  $('#hudTimer').innerHTML=`Tiempo: <b>${fmt(Math.floor(sLeft/60))}:${fmt(sLeft%60)}</b>`;
-
-  if(state.current.phase==='rest'){
-    $('#restLeft').textContent=sLeft;
-    $('#restBanner').classList.remove('hide');
-
-    // avisos 30/20/10 (solo una vez cada uno) + bip
-    [30,20,10].forEach(v=>{
-      if(sLeft===v && !clock.spokenSecSet.has(v)){
-        clock.spokenSecSet.add(v);
-        speak(`${v} segundos`); beep(700,100);
-      }
-    });
-    // 3-2-1 bips distintos (no se pisan)
-    if(clock.lastBeepSec!==sLeft){
-      if(sLeft===3) beep(700,120);
-      if(sLeft===2) beep(900,130);
-      if(sLeft===1) beep(1200,220,0.08);
-      clock.lastBeepSec=sLeft;
-    }
-
-    if(msLeft<=0){ // fin descanso -> siguiente serie
-      $('#restBanner').classList.add('hide');
-      clock.stop();
-      avanzarTrasDescanso();
-      return;
-    }
-  }
-
-  rafId = requestAnimationFrame(loop);
-}
-
-/* ========== Serie / Descanso ========== */
-let repTimer=null, repNum=0, repTarget=0;
 function startExercise(ei){
+  // abre ejercicio y arranca primera serie como pediste
   if(state.plan[ei].series.every(s=>s.done)) return;
   const si = state.plan[ei].series.findIndex(s=>!s.done);
   startSerie(ei, Math.max(0, si));
 }
-async function startSerie(ei,si){
-  clearRepTimer(); clock.stop();
-  const ex=state.plan[ei], s=ex.series[si];
-  state.current.ex=ei; state.current.serie=si; state.current.phase='reps';
-  repTarget = s.reps; repNum=0;
+
+function startSerie(ei, si){
+  clearAllTimers();
+  const ex = state.plan[ei]; const s = ex.series[si];
+  // bloquear edición
+  state.current = {ex:ei, serie:si, mode:'reps'};
+  repTarget = s.reps; repCount=0;
+  $('#hudReps').innerHTML = `Reps: <b>0/${repTarget}</b>`;
   $('#restBanner').classList.add('hide');
-  $('#hudReps').innerHTML=`Reps: <b>0/${repTarget}</b>`;
   render();
 
-  await speak(`Empezamos serie ${si+1}. ${repTarget} repeticiones.`);
-  // temporizador de repeticiones a cadencia fija, y HUD lee del contador real
-  repTimer = setInterval(async ()=>{
-    repNum++;
-    $('#hudReps').innerHTML=`Reps: <b>${repNum}/${repTarget}</b>`;
-    await speak(`${repNum}. Arriba... Abajo...`);
-    if(repNum>=repTarget){ clearRepTimer(); endSerie(ei,si); }
-  }, 1200);
+  // Voz de inicio
+  speakQueue(`Empezamos serie ${si+1}. ${repTarget} repeticiones.`, ()=>{
+    // contar repeticiones con voz y cadencia 1.2s aprox
+    repTimer = setInterval(()=>{
+      if(repCount>=repTarget){ clearInterval(repTimer); repTimer=null; endSerie(ei, si); return;}
+      repCount++;
+      $('#hudReps').innerHTML = `Reps: <b>${repCount}/${repTarget}</b>`;
+      // voz “Arriba / Abajo” + número
+      speakQueue(`${repCount}. Arriba... Abajo...`);
+    }, 1200);
+  });
 }
-function clearRepTimer(){ if(repTimer){clearInterval(repTimer);repTimer=null} }
 
-function endSerie(ei,si){
-  state.plan[ei].series[si].done=true;
+function endSerie(ei, si){
+  // marcar hecha
+  state.plan[ei].series[si].done = true;
   render();
+  // iniciar descanso sincronizado
   startRest(ei, si);
 }
 
-async function startRest(ei,si){
-  const ex=state.plan[ei];
-  state.current.phase='rest';
-  // Aviso de inicio y arranque de reloj maestro
-  await speak(`Iniciamos descanso de ${ex.descanso} segundos.`);
-  clock.start('rest', ex.descanso);
+let paused=false, pausedAt=0;
+function startRest(ei, si){
+  const ex = state.plan[ei];
+  restLeft = ex.descanso;
+  state.current.mode='rest';
+  $('#restBanner').classList.remove('hide');
+  $('#hudTimer').innerHTML = `Tiempo: <b>${fmt(Math.floor(restLeft/60))}:${fmt(restLeft%60)}</b>`;
+  $('#restLeft').textContent = restLeft;
+  render();
+  speakQueue(`Iniciamos descanso de ${restLeft} segundos.`);
+
+  clearInterval(restTimer);
+  restTimer = setInterval(()=>{
+    if(paused) return;
+    restLeft--;
+    $('#restLeft').textContent = restLeft;
+    $('#hudTimer').innerHTML = `Tiempo: <b>${fmt(Math.floor(restLeft/60))}:${fmt(restLeft%60)}</b>`;
+
+    // Avisos 30/20/10 y bips
+    if([30,20,10].includes(restLeft)){ speakQueue(`${restLeft} segundos`); beep(700,100); }
+    // 3,2,1 con bips distintos
+    if(restLeft===3){ beep(700,120) }
+    if(restLeft===2){ beep(900,130) }
+    if(restLeft===1){ beep(1200,200,0.08) }
+
+    if(restLeft<=0){
+      clearInterval(restTimer); restTimer=null;
+      $('#restBanner').classList.add('hide');
+      // siguiente serie automática dentro del MISMO ejercicio
+      const next = ex.series.findIndex(s=>!s.done);
+      if(next>=0){
+        if(state.autoNext){ startSerie(ei, next); }
+        else{ state.current.mode='idle'; render(); }
+      }else{
+        // ejercicio completado -> idle y tarjeta queda en verde (done)
+        state.current.mode='idle'; render();
+      }
+    }
+  },1000);
 }
 
-function avanzarTrasDescanso(){
-  const ex = state.plan[state.current.ex];
-  const next = ex.series.findIndex(s=>!s.done);
-  if(next>=0){
-    if(state.autoNext){ startSerie(state.current.ex, next); }
-    else{ state.current.phase='idle'; render(); }
-  }else{
-    state.current.phase='idle'; render();
-  }
-}
-
-/* ========== Controles UI ========== */
+/* ------------------ Eventos globales ------------------ */
 document.addEventListener('click', e=>{
-  const el=e.target.closest('button'); if(!el) return;
-  const act=el.dataset.act;
-  if(act==='start-ex'){ startExercise(+el.dataset.e); return; }
-  if(act==='start-serie'){ startSerie(+el.dataset.e,+el.dataset.s); return; }
-  if(act==='del-serie'){
-    const ei=+el.dataset.e, si=+el.dataset.s;
+  const el = e.target.closest('button'); if(!el) return;
+  const a = el.dataset.action;
+  if(a==='start-ex'){ startExercise(+el.dataset.e); return; }
+  if(a==='start-serie'){ startSerie(+el.dataset.e, +el.dataset.s); return; }
+  if(a==='del-serie'){
+    const ei=+el.dataset.e, si=+el.dataset.s; 
     if(state.plan[ei].series[si].done) return;
-    state.plan[ei].series.splice(si,1); render(); return;
+    state.plan[ei].series.splice(si,1);
+    // re-render
+    render(); return;
   }
-  if(act==='peso-inc'||act==='peso-dec'||act==='reps-inc'||act==='reps-dec'){
-    const ei=+el.dataset.e, si=+el.dataset.s, s=state.plan[ei].series[si];
-    const live = state.current.phase==='reps' && state.current.ex===ei && state.current.serie===si;
-    if(live) return;
-    if(act==='peso-inc') s.peso=+(s.peso+0.5).toFixed(1);
-    if(act==='peso-dec') s.peso=+(Math.max(0,s.peso-0.5)).toFixed(1);
-    if(act==='reps-inc') s.reps=Math.min(120,s.reps+1);
-    if(act==='reps-dec') s.reps=Math.max(1,s.reps-1);
-    save(state); render(); return;
+  if(a==='peso-inc'||a==='peso-dec'||a==='reps-inc'||a==='reps-dec'){
+    const ei=+el.dataset.e, si=+el.dataset.s; const s=state.plan[ei].series[si];
+    if(state.current.mode==='reps' && state.current.ex===ei && state.current.serie===si) return;
+    if(a==='peso-inc') s.peso = +(s.peso+0.5).toFixed(1);
+    if(a==='peso-dec') s.peso = +(Math.max(0, s.peso-0.5)).toFixed(1);
+    if(a==='reps-inc') s.reps = Math.min(120, s.reps+1);
+    if(a==='reps-dec') s.reps = Math.max(1, s.reps-1);
+    render(); return;
   }
-  if(act==='mark-done'){
+  if(a==='rest-edit'){
+    const ei=+el.dataset.e; const val = prompt('Segundos de descanso para este ejercicio:', state.plan[ei].descanso);
+    if(!val) return; const n = Math.max(10, parseInt(val,10)||60);
+    state.plan[ei].descanso = n; render(); return;
+  }
+  if(a==='mark-done'){
     const ei=+el.dataset.e, si=+el.dataset.s;
-    if(state.current.phase!=='reps') return;
-    clearRepTimer(); endSerie(ei,si); return;
-  }
-  if(act==='rest-edit'){
-    const ei=+el.dataset.e; const v=prompt('Segundos de descanso:', state.plan[ei].descanso);
-    if(!v) return; const n=Math.max(10, parseInt(v,10)||60);
-    state.plan[ei].descanso=n; save(state); render(); return;
+    if(state.current.mode!=='reps') return;
+    clearAllTimers();
+    endSerie(ei, si);
+    return;
   }
 });
 
 document.addEventListener('input', e=>{
-  const inp=e.target;
-  if(!inp.matches('[data-field="peso"],[data-field="reps"]')) return;
-  // localizar indices por DOM
-  const card=inp.closest('.card');
-  const ei=[...document.querySelectorAll('#exercises .card')].indexOf(card);
-  const si=[...card.querySelector('.series').children].indexOf(inp.closest('.serie'));
-  const s=state.plan[ei].series[si];
-  if(inp.dataset.field==='peso'){
-    let v=parseFloat((inp.value+'').replace(',','.')); if(isNaN(v)) v=s.peso;
-    s.peso=+v.toFixed(1);
-  }else{
-    let v=parseInt(inp.value,10); if(isNaN(v)) v=s.reps;
-    s.reps=Math.max(1,Math.min(120,v));
+  const inp = e.target;
+  if(inp.matches('[data-field="peso"],[data-field="reps"]')){
+    const card = inp.closest('.serie'); const ei = [...$('#exercises').children].indexOf(inp.closest('.card'));
+    // localizar serie por índice visual
+    const nodes=[...inp.closest('.series').children];
+    const si=nodes.indexOf(inp.closest('.serie'));
+    const s=state.plan[ei].series[si];
+    if(inp.dataset.field==='peso'){
+      let v=parseFloat(inp.value.replace(',','.')); if(isNaN(v)) v=s.peso;
+      s.peso=+v.toFixed(1);
+    }else{
+      let v=parseInt(inp.value,10); if(isNaN(v)) v=s.reps;
+      s.reps=Math.max(1, Math.min(120, v));
+    }
+    persist.save(state);
   }
-  save(state);
 });
 
 /* Botones superiores */
-$('#btnGuardar').onclick=()=>{ save(state); beep(1000,150,0.07); };
-$('#btnReset').onclick=()=>{
-  if(!confirm('¿Reiniciar el día?')) return;
-  speechSynthesis.cancel(); clearRepTimer(); clock.stop();
-  state={autoNext:$('#autoNext').checked,current:{phase:'idle',ex:0,serie:0,endTime:0,lastSecond:null},plan:JSON.parse(JSON.stringify(planBase))};
-  $('#restBanner').classList.add('hide'); save(state); render();
-};
+$('#btnGuardar').addEventListener('click', ()=>{
+  persist.save(state); beep(1000,150,0.07);
+});
 
-/* Descanso: pausa / reanudar / saltar */
-let paused=false;
-$('#btnRestPause').onclick=()=>{
-  if(state.current.phase!=='rest') return;
-  if(paused) return;
-  paused=true;
-  // fijamos un nuevo endTime infinito… pero guardamos ms restantes
-  state._restRemain = Math.max(0, state.current.endTime - now());
-  clock.stop();
-};
-$('#btnRestResume').onclick=()=>{
-  if(state.current.phase!=='rest') return;
-  if(!paused) return;
-  paused=false;
-  let remain = state._restRemain||0;
-  if(remain<10000) remain=10000; // mínimo 10 s al reanudar
-  state.current.endTime = now() + remain;
-  clock.running=true; loop();
-};
-$('#btnRestSkip').onclick=()=>{
-  if(state.current.phase!=='rest') return;
-  paused=false; clock.stop(); $('#restBanner').classList.add('hide'); avanzarTrasDescanso();
-};
+$('#btnReset').addEventListener('click', ()=>{
+  if(!confirm('¿Reiniciar el día? Se borrarán series completadas.')) return;
+  clearAllTimers();
+  state = { autoNext: $('#autoNext').checked, current:{ex:0,serie:0,mode:'idle'}, plan: JSON.parse(JSON.stringify(defaultPlan)) };
+  $('#restBanner').classList.add('hide');
+  render();
+});
 
-/* Al cargar */
-window.addEventListener('load', render);
+/* ------------------ Controles de descanso (pausa/saltar) ------------------ */
+// Creamos controles flotantes dentro del banner
+(function mountRestControls(){
+  const b = document.createElement('div'); b.style.marginTop='6px';
+  b.innerHTML = `
+    <div class="actions">
+      <button id="btnRestPause" class="ghost">⏸️ Pausa</button>
+      <button id="btnRestResume" class="ghost" disabled>▶ Reanudar</button>
+      <button id="btnRestSkip" class="warn">⏩ Saltar descanso</button>
+    </div>
+  `;
+  $('#restBanner').appendChild(b);
+
+  $('#btnRestPause').onclick = ()=>{
+    if(state.current.mode!=='rest') return;
+    paused=true; pausedAt = restLeft;
+    $('#btnRestPause').disabled=true;
+    $('#btnRestResume').disabled=false;
+  };
+  $('#btnRestResume').onclick = ()=>{
+    if(state.current.mode!=='rest') return;
+    // al reanudar, si restLeft < 10, subimos a 10
+    if(restLeft<10) restLeft=10;
+    paused=false;
+    $('#btnRestPause').disabled=false;
+    $('#btnRestResume').disabled=true;
+  };
+  $('#btnRestSkip').onclick = ()=>{
+    if(state.current.mode!=='rest') return;
+    // saltar descanso -> directamente a la siguiente serie del MISMO ejercicio
+    const {ex, serie} = state.current;
+    clearInterval(restTimer); restTimer=null;
+    $('#restBanner').classList.add('hide');
+    const currEx = state.plan[ex];
+    const next = currEx.series.findIndex(s=>!s.done);
+    if(next>=0){ startSerie(ex, next); }
+    else{ state.current.mode='idle'; render(); }
+  };
+})();
+
+/* ------------------ Cargar estado al abrir ------------------ */
+window.addEventListener('load', ()=>{
+  // restaurar autoNext pill
+  $('#autoNext').checked = state.autoNext;
+  render();
+});
 </script>
 </body>
 </html>
