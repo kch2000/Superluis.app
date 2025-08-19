@@ -1,48 +1,43 @@
-const CACHE_NAME = 'superluis-v1';
-const APP_SHELL = [
+// service-worker.js
+const CACHE = 'superluis-v1';
+const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './service-worker.js'
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-// Install
-self.addEventListener('install', (e)=>{
-  e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_SHELL)));
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE).then((c) => c.addAll(ASSETS))
+  );
   self.skipWaiting();
 });
 
-// Activate
-self.addEventListener('activate', (e)=>{
+self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then(keys=>Promise.all(keys.map(k=>k!==CACHE_NAME?caches.delete(k):null)))
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => (k !== CACHE) && caches.delete(k)))
+    )
   );
   self.clients.claim();
 });
 
-// Fetch
-self.addEventListener('fetch', (e)=>{
-  const req = e.request;
-  const url = new URL(req.url);
-
-  // App shell cache-first
-  if(APP_SHELL.some(p=>url.pathname.endsWith(p.replace('./','/')) || url.pathname === '/')){
+self.addEventListener('fetch', (e) => {
+  const { request } = e;
+  // Estrategia: cache-first para assets, network-first para lo demás
+  if (ASSETS.some(p => request.url.includes(p))) {
     e.respondWith(
-      caches.match(req).then(cached=> cached || fetch(req).then(res=>{
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then(c=>c.put(req, copy));
-        return res;
-      }))
+      caches.match(request).then(r => r || fetch(request))
     );
-    return;
+  } else {
+    e.respondWith(
+      fetch(request).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE).then(c => c.put(request, clone)).catch(()=>{});
+        return res;
+      }).catch(() => caches.match(request))
+    );
   }
-
-  // Otros: network-first con fallback a cache
-  e.respondWith(
-    fetch(req).then(res=>{
-      const copy = res.clone();
-      caches.open(CACHE_NAME).then(c=>c.put(req, copy));
-      return res;
-    }).catch(()=>caches.match(req))
-  );
 });
